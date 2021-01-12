@@ -1,24 +1,19 @@
 import sys
 
-def main(args):
-	args = args[0] if args else '0,8,15,2,12,1,4'
+def main():
+	args = sys.argv
+	args = (args[1] if len(args) > 1 else '0,8,15,2,12,1,4').split(',')
 
-	memory = {}
-	turn = 0
-	prev = None
+	argc = len(args)
+	memory = {int(args[turn-1]): turn for turn in range(1, argc)}
+	prev = int(args[argc-1])
 
-	for n in map(int, args.split(',')):
-		if prev is not None:
-			memory[prev] = turn
-		turn += 1
-		prev = n
-	while turn < 30000000:
-		n = 0 if prev not in memory else turn - memory[prev]
+	for turn in range(argc, 30000000):
+		n = turn - memory.get(prev, turn)
 		memory[prev] = turn
-		turn += 1
 		prev = n
 
 	print(prev)
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
+	main()
