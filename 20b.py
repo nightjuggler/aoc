@@ -250,7 +250,7 @@ def find_monster(image, monster):
 		else:
 			print('Rotated right')
 
-def connect_tiles(tiles, size):
+def connect_tiles(tiles):
 	borders = {}
 	num_inside_edges = 0
 
@@ -276,13 +276,7 @@ def connect_tiles(tiles, size):
 			edges.append(edge)
 			num_inside_edges += 1
 
-	expected_edges = size * (size + 1) * 2
-	if len(borders) != expected_edges:
-		err('Expected {} edges (got {}) for {} tiles!', expected_edges, len(borders), num_tiles)
-
-	expected_edges -= size * 4
-	if num_inside_edges != expected_edges:
-		err('Expected {} inside edges (got {}) for {} tiles!', expected_edges, num_inside_edges, num_tiles)
+	return len(borders), num_inside_edges
 
 def read_tiles(input):
 	pattern1 = re.compile('^Tile [1-9][0-9]{3}:$')
@@ -319,14 +313,23 @@ def main():
 	if size * size != num_tiles:
 		err('The number of tiles must be an integer squared!')
 
-	connect_tiles(tiles, size)
+	num_edges, num_inside_edges = connect_tiles(tiles)
+
+	expected_edges = size * (size + 1) * 2
+	if num_edges != expected_edges:
+		err('Expected {} edges (got {}) for {} tiles!', expected_edges, num_edges, num_tiles)
+
+	expected_edges -= size * 4
+	if num_inside_edges != expected_edges:
+		err('Expected {} inside edges (got {}) for {} tiles!', expected_edges, num_inside_edges, num_tiles)
+
 	if size > 1:
 		arrange_tiles(tiles)
 
 	check_arrangement(tiles, size)
 
 	image = make_image1(tiles)
-	assert image == make_image2(tiles)
+#	assert image == make_image2(tiles)
 
 	find_monster(image, (
 		'                  # ',
