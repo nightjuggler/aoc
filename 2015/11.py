@@ -1,43 +1,46 @@
 def update_password(password, skip):
 	plen = len(password)
+	pair1 = pair2 = straight = None
+	first = True
+	i = plen - 1
 
-	while True:
-		i = plen - 1
+	while not (pair1 and pair2 and straight):
 		while password[i] == 25:
 			password[i] = 0
 			i -= 1
 			if i < 0:
 				i = plen - 1
 				password[i] = -1
-				break
-
 		password[i] += 1
-		if password[i] in skip:
-			password[i] += 1
-			for j in range(i + 1, plen):
-				password[j] = 0
 
-		pair1 = pair2 = straight = None
-		q = p = None
+		if first:
+			i = 0
+			first = False
+		else:
+			if pair1:
+				if pair1 >= i:
+					pair1 = pair2 = None
+				elif pair2 and pair2 >= i:
+					pair2 = None
+			if straight and straight >= i:
+				straight = None
 
-		for i in range(plen):
+		p = password[i-1] if i > 0 else None
+
+		for i in range(i, plen):
 			c = password[i]
 			if c in skip:
 				password[i] = c = c + 1
 				for j in range(i + 1, plen):
 					password[j] = 0
-			elif c == p:
+			if c == p:
 				if not pair1:
 					pair1 = i
 				elif not pair2 and i > pair1 + 1:
 					pair2 = i
-			elif i > 1 and c == p + 1 and c == q + 2 and not straight:
+			elif i > 1 and c == p + 1 and c == password[i-2] + 2 and not straight:
 				straight = i
-			q = p
 			p = c
-
-		if pair1 and pair2 and straight:
-			break
 
 def main():
 	import argparse
