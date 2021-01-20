@@ -25,7 +25,7 @@ def main():
 			err('Line {} doesn\'t match pattern!', line_number)
 		parent_color = m.group(1)
 		if parent_color in parent_colors:
-			err('Line {}: Rule for "{}" bags was already defined!', line_number, color)
+			err('Line {}: Rule for {} bags was already defined!', line_number, parent_color)
 		parent_colors.add(parent_color)
 		if line[-2:] != '.\n':
 			err('Line {} doesn\'t match pattern!', line_number)
@@ -45,7 +45,7 @@ def main():
 					err('Line {} doesn\'t match pattern!', line_number)
 
 			if color in colors:
-				err('Color "{}" occurs more than once on line {}!', color, line_number)
+				err('Line {}: {} occurs more than once!', line_number, color)
 			graph.setdefault(color, []).append(parent_color)
 			colors.add(color)
 
