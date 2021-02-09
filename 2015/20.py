@@ -1,23 +1,20 @@
 def solve(n, size):
 	if n == 1:
-		print(1)
-		return
+		return 1, 1
 	if size == 0:
 		size = n + 2
-		print('Setting the array size to', size)
 	s = [0] * size
 	for elf in range(1, size // 2):
 		for i in range(elf, size, elf):
 			s[i] += elf
 		i = elf * 2
 		if s[i] + i >= n:
-			print('House', i, 'receives', 10 * (s[i] + i), 'presents')
-			return
+			return i, s[i] + i
 		i += 1
 		if s[i] + i >= n:
-			print(i)
-			return
+			return i, s[i] + i
 	print('Please try an array size >', size)
+	return 0, 0
 
 def solve_naive(n):
 	x = 1
@@ -30,7 +27,7 @@ def solve_naive(n):
 		if s >= n:
 			break
 		x += 1
-	print(x)
+	return x, s
 
 def main():
 	import argparse
@@ -53,10 +50,9 @@ def main():
 		print('The array size must be >= 0!')
 		return
 
-	if args.naive:
-		solve_naive(n)
-	else:
-		solve(n, size)
+	x, s = solve_naive(n) if args.naive else solve(n, size)
+
+	print('House', x, 'receives', 10 * s, 'presents')
 
 if __name__ == '__main__':
 	main()

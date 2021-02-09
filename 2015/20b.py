@@ -1,23 +1,20 @@
 def solve(n, size):
 	if n == 1:
-		print(1)
-		return
+		return 1, 1
 	if size == 0:
 		size = n + 2
-		print('Setting the array size to', size)
 	s = [0] * size
 	for elf in range(1, size // 2):
 		for i in range(elf, min(50 * elf + 1, size), elf):
 			s[i] += elf
 		i = elf * 2
 		if s[i] + i >= n:
-			print('House', i, 'receives', 11 * (s[i] + i), 'presents')
-			return
+			return i, s[i] + i
 		i += 1
 		if s[i] + i >= n:
-			print(i)
-			return
+			return i, s[i] + i
 	print('Please try an array size >', size)
+	return 0, 0
 
 def main():
 	import argparse
@@ -39,7 +36,9 @@ def main():
 		print('The array size must be >= 0!')
 		return
 
-	solve(n, size)
+	x, s = solve(n, size)
+
+	print('House', x, 'receives', 11 * s, 'presents')
 
 if __name__ == '__main__':
 	main()
