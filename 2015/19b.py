@@ -1,11 +1,13 @@
-import argparse
 import re
+import sys
+
+def err(message, *args):
+	sys.exit(message.format(*args) if args else message)
 
 def tokenize(s):
 	max_i = len(s) - 1
 	if max_i < 0:
-		print('tokenize(): Expected non-empty string!')
-		return []
+		err('tokenize(): Expected non-empty string!')
 
 	t = []
 	i = 0
@@ -13,8 +15,7 @@ def tokenize(s):
 
 	while True:
 		if not (65 <= a <= 90):
-			print('tokenize("{}"): Expected uppercase letter at position {}!'.format(s, i))
-			break
+			err('tokenize("{}"): Expected uppercase letter at position {}!', s, i)
 		if i == max_i:
 			t.append(chr(a))
 			break
@@ -43,8 +44,8 @@ def read_rules(f):
 		if not line_pattern.match(line):
 			if not line:
 				break
-			print('Line {} doesn\'t match pattern!'.format(i))
-			continue
+			err('Line {} doesn\'t match pattern!', i)
+
 		a, b = line.split(' => ')
 		b = tuple(tokenize(b))
 		blen = len(b)
@@ -77,8 +78,8 @@ def read_rules(f):
 	return rules, e_rules, rn_leaders
 
 def reduce_pairwise(rules, x):
-	s = set()
-	slen = 0
+	rset = set()
+	rlen = 0
 
 	def recurse(j):
 		xlen = len(x)
@@ -89,35 +90,25 @@ def reduce_pairwise(rules, x):
 				x[i:i+2] = [a]
 				recurse(0 if i < 2 else i-1)
 				x[i:i+1] = prev
-		nonlocal slen
-		if slen == 0:
-			slen = xlen
-		elif xlen > slen:
+		nonlocal rlen
+		if rlen == 0:
+			rlen = xlen
+		elif xlen > rlen:
 			return
-		elif xlen < slen:
-			s.clear()
-			slen = xlen
-		s.add(tuple(x))
+		elif xlen < rlen:
+			rset.clear()
+			rlen = xlen
+		rset.add(tuple(x))
 
 	recurse(0)
-	assert len(s) == 1
-	s = s.pop()
-	if len(s) > 1:
-		print('Cannot reduce to one element:', ''.join(x), '=>', ''.join(s))
-	return s
+	if len(rset) != 1:
+		err('More than one reduction for {}: {}!', ''.join(x), ', '.join([''.join(r) for r in rset]))
+	r = rset.pop()
+	if rlen > 1:
+		print('Cannot reduce to one element:', ''.join(x), '=>', ''.join(r))
+	return r
 
-def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('inputfile', nargs='?', default='data/19.input')
-	parser.add_argument('-v', '--verbose', action='store_true')
-	args = parser.parse_args()
-
-	verbose = args.verbose
-
-	with open(args.inputfile) as f:
-		rules, e_rules, rn_leaders = read_rules(f)
-		m = tokenize(f.readline().rstrip())
-
+def reduce_molecule(m, rules, e_rules, rn_leaders, verbose=False):
 	if verbose:
 		print(''.join(m))
 
@@ -163,13 +154,13 @@ def main():
 			rn_i = rn.pop()[0]
 			p = m[rn_i-1:i+1]
 			a = rules.get(tuple(p))
-			if verbose:
-				print(''.join(p), '=>', a)
-			assert a
+			if not a:
+				err('Cannot reduce {}!', ''.join(p))
 			steps += 1
 			m[rn_i-1:i+1] = [a]
 			size = len(m)
 			if verbose:
+				print(''.join(p), '=>', a)
 				print(''.join(m))
 			i = rn_i
 			rn_i = rn[-1][-1] + 1 if rn else 0
@@ -189,6 +180,19 @@ def main():
 		print('Reduced to e in', steps + 1, 'steps')
 	else:
 		print(''.join(m), 'cannot be reduced to e!')
+
+def main():
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument('inputfile', nargs='?', default='data/19.input')
+	parser.add_argument('-v', '--verbose', action='store_true')
+	args = parser.parse_args()
+
+	with open(args.inputfile) as f:
+		rules, e_rules, rn_leaders = read_rules(f)
+		molecule = tokenize(f.readline().rstrip())
+
+	reduce_molecule(molecule, rules, e_rules, rn_leaders, args.verbose)
 
 if __name__ == '__main__':
 	main()
