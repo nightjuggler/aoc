@@ -6,17 +6,25 @@ def react(polymer, unit):
 	polymer = [x for x in polymer if x != upper and x != lower]
 	diff = ord('a') - ord('A')
 
-	i = 1
 	size = len(polymer)
+	if size == 0:
+		return 0, unit
+	j = 0
+	i = 1
 	while i < size:
-		if abs(polymer[i] - polymer[i-1]) == diff:
-			polymer[i-1:i+1] = []
-			size -= 2
-			if i > 1:
-				i -= 1
-		else:
+		if abs(polymer[i] - polymer[j]) != diff:
+			j += 1
+			polymer[j] = polymer[i]
+		elif j == 0:
 			i += 1
-	return size
+			if i == size:
+				return 0, unit
+			polymer[0] = polymer[i]
+		else:
+			j -= 1
+		i += 1
+
+	return j + 1, unit
 
 def main():
 	polymer = [ord(x) for x in sys.stdin.readline().rstrip()]
