@@ -12,7 +12,7 @@ def read_input(f):
 	if not state_pattern.match(line):
 		err('Line 1 doesn\'t match pattern!')
 
-	state = set([i for i, c in enumerate(line[15:]) if c == '#'])
+	state = [i for i, c in enumerate(line[15:]) if c == '#']
 
 	if f.readline().rstrip() != '':
 		err('Line 2 doesn\'t match pattern!')
@@ -45,8 +45,9 @@ def main():
 
 	state, rules = read_input(sys.stdin)
 
-	lo = offset = 0
-	hi = max(state)
+	offset = 0
+	hi = state[-1]
+	state = set(state)
 
 	for gen in range(num_gen):
 		new_state = []
