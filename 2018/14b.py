@@ -9,24 +9,33 @@ def main():
 			return
 
 	target = [int(d) for d in target]
+	last = target.pop()
 	target_len = len(target)
-	recipes = [3, 7]
-	num_recipes = 2
+	recipes = []
+	num_recipes = 0
+
+	for new_recipe in (3, 7):
+		if last == new_recipe and recipes[num_recipes - target_len:] == target:
+			print(num_recipes - target_len)
+			return
+		recipes.append(new_recipe)
+		num_recipes += 1
+
 	i1 = 0
 	i2 = 1
-
-	while recipes[num_recipes - target_len:] != target:
+	while True:
 		elf1 = recipes[i1]
 		elf2 = recipes[i2]
 		new_recipe = elf1 + elf2
 		if new_recipe >= 10:
+			if last == 1 and recipes[num_recipes - target_len:] == target:
+				break
 			recipes.append(1)
 			num_recipes += 1
-			if recipes[num_recipes - target_len:] == target:
-				break
-			recipes.append(new_recipe - 10)
-		else:
-			recipes.append(new_recipe)
+			new_recipe -= 10
+		if last == new_recipe and recipes[num_recipes - target_len:] == target:
+			break
+		recipes.append(new_recipe)
 		num_recipes += 1
 		i1 = (i1 + elf1 + 1) % num_recipes
 		i2 = (i2 + elf2 + 1) % num_recipes
