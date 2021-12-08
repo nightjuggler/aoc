@@ -1,7 +1,7 @@
 import sys
 
 def map_wires(signal_patterns):
-	wires = {chr(ord('a') + i): set('abcdefg') for i in range(7)}
+	wires = {c: set('abcdefg') for c in 'abcdefg'}
 	fives = []
 	sixes = []
 	for x in signal_patterns:
