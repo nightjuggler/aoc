@@ -34,17 +34,27 @@ def print_grid(grid, yx2unit):
 				for x, c in enumerate(row) if c == elf or c == goblin]))
 	print()
 
-def fill_distance(d_grid, y, x, distance, step):
-	distance += 1
+def get_move(d_grid, y, x, best, distance, step):
+	moves = []
 	for ay, ax in ((y - 1, x), (y, x - 1), (y, x + 1), (y + 1, x)):
 		d = d_grid[ay][ax]
-		if d and (not d[0] or distance < d[0]):
-			d[0] = distance
-			d[1] = step or (ay, ax)
-			fill_distance(d_grid, ay, ax, distance, d[1])
+		if d == 0:
+			candidate = (distance, (y, x), step)
+			return candidate if not best or candidate < best else best
+		if d and (not d[0] or distance + 1 < d[0]):
+			moves.append((d, ay, ax))
+	distance += 1
+	if best and distance > best[0]:
+		return best
+	for d, ay, ax in moves:
+		d[0] = distance
+		d[1] = step or (ay, ax)
+		best = get_move(d_grid, ay, ax, best, distance, d[1])
+	return best
 
 def main():
 	grid = read_input()
+	verbose = True
 
 	elf, goblin, empty = ord('E'), ord('G'), ord('.')
 	elves, goblins, units = [], [], []
@@ -62,78 +72,66 @@ def main():
 				units.append(unit)
 
 	def combat(y, x, opponents):
-		nonlocal grid, yx2unit, empty
-		c = opponents[0][2]
-		opp = None
-		for ay, ax in ((y - 1, x), (y, x - 1), (y, x + 1), (y + 1, x)):
-			if grid[ay][ax] == c:
-				unit = yx2unit[(ay, ax)]
-				if not opp or unit[3] < opp[3]:
-					opp = unit
-		if not opp:
+		nonlocal grid, empty, yx2unit
+		opponent = opponents[0][2]
+		target = None
+		for yx in ((y - 1, x), (y, x - 1), (y, x + 1), (y + 1, x)):
+			unit = yx2unit.get(yx)
+			if unit and unit[2] == opponent and (not target or unit[3] < target[3]):
+				target = unit
+		if not target:
 			return False
-#		print(f'{chr(grid[y][x])} @ {y},{x} attacks {chr(c)} @ {opp[0]},{opp[1]}')
-		opp[3] -= 3
-		if opp[3] <= 0:
-			y, x = opp[:2]
+#		print(f'{chr(grid[y][x])} @ {y},{x} attacks {chr(opponent)} @ {target[0]},{target[1]}')
+		target[3] -= 3
+		if target[3] <= 0:
+			y, x = target[0], target[1]
 			grid[y][x] = empty
 			del yx2unit[(y, x)]
-			opponents.remove(opp)
+			opponents.remove(target)
 		return True
 
 	def all_blocked(opponents):
 		nonlocal grid, empty
-		for opp in opponents:
-			y, x = opp[:2]
+		for unit in opponents:
+			y, x = unit[0], unit[1]
 			for ay, ax in ((y - 1, x), (y, x - 1), (y, x + 1), (y + 1, x)):
 				if grid[ay][ax] == empty:
 					return False
 		return True
 
 	rounds = 0
-	print('Initially:')
-	print_grid(grid, yx2unit)
+	if verbose:
+		print('Initially:')
+		print_grid(grid, yx2unit)
 	while True:
-		dead = []
 		for unit in sorted(units):
 			y, x, u, hp = unit
 			if hp <= 0:
-				dead.append(unit)
 				continue
 			opponents = goblins if u == elf else elves
 			if not opponents:
 				print('Game over!')
-				hp_sum = sum([unit[3] for unit in units if unit[3] > 0])
-				print(rounds, '*', hp_sum, '=', rounds * hp_sum)
+				hp = sum([unit[3] for unit in units if unit[3] > 0])
+				print(rounds, '*', hp, '=', rounds * hp)
 				return
-			if combat(y, x, opponents):
+			if combat(y, x, opponents) or all_blocked(opponents):
 				continue
-			if all_blocked(opponents):
-				continue
-			d_grid = [[[0, None] if c == empty else None for c in row] for row in grid]
-			fill_distance(d_grid, y, x, 0, None)
-			d_min, step = None, None
-			for opp in sorted(opponents):
-				oy, ox = opp[:2]
-				for ay, ax in ((oy - 1, ox), (oy, ox - 1), (oy, ox + 1), (oy + 1, ox)):
-					d = d_grid[ay][ax]
-					if d and d[0] and (not d_min or d[0] < d_min):
-						d_min, step = d
-			if step:
-				ay, ax = step
+			opponent = opponents[0][2]
+			d_grid = [[[0, None] if c == empty else 0 if c == opponent else None for c in row]
+				for row in grid]
+			move = get_move(d_grid, y, x, None, 0, None)
+			if move:
 				grid[y][x] = empty
-				grid[ay][ax] = u
 				del yx2unit[(y, x)]
-				yx2unit[step] = unit
-				unit[0] = ay
-				unit[1] = ax
-				if d_min == 1:
-					combat(ay, ax, opponents)
-		for unit in dead:
-			units.remove(unit)
+				unit[0], unit[1] = y, x = move[2]
+				grid[y][x] = u
+				yx2unit[(y, x)] = unit
+				if move[0] == 1:
+					combat(y, x, opponents)
 		rounds += 1
-		print('After', rounds, 'rounds:')
-		print_grid(grid, yx2unit)
+		if verbose:
+			print('After', rounds, 'rounds:')
+			print_grid(grid, yx2unit)
 
 if __name__ == '__main__':
 	main()
