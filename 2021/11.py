@@ -24,24 +24,23 @@ def main(part1=True):
 					if e > 9:
 						flash(ay, ax)
 
+	def one_step():
+		nonlocal grid
+		grid = [[e + 1 for e in row] for row in grid]
+		for y, row in enumerate(grid):
+			for x, e in enumerate(row):
+				if e > 9:
+					flash(y, x)
+
 	if part1:
-		for step in range(100):
-			grid = [[n + 1 for n in row] for row in grid]
-			for y, row in enumerate(grid):
-				for x, e in enumerate(row):
-					if e > 9:
-						flash(y, x)
+		for step in range(100): one_step()
 		print(flashes)
 	else:
 		size = len(grid) * len(grid[0])
 		step = 0
 		while flashes != size:
-			grid = [[n + 1 for n in row] for row in grid]
 			flashes = 0
-			for y, row in enumerate(grid):
-				for x, e in enumerate(row):
-					if e > 9:
-						flash(y, x)
+			one_step()
 			step += 1
 		print(step)
 
