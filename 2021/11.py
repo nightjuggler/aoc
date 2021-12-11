@@ -1,7 +1,36 @@
 import sys
 
+def read_input():
+	ord0 = ord('0')
+	line_number = 0
+	line_length = 0
+	grid = []
+
+	for line in sys.stdin:
+		line_number += 1
+		row = [ord(digit) - ord0 for digit in line.rstrip()]
+		for digit in row:
+			if digit < 0 or digit > 9:
+				print(f'Input line {line_number}: Unexpected character!')
+				return None
+		if line_length:
+			if len(row) != line_length:
+				print(f'Input line {line_number}: Unexpected length!')
+				return None
+		else:
+			line_length = len(row)
+			if line_length == 0:
+				print(f'Input line {line_number} is empty!')
+				return None
+		grid.append(row)
+
+	return grid
+
 def main(part1=True):
-	grid = [[int(c) for c in line.rstrip()] for line in sys.stdin]
+	grid = read_input()
+	if not grid:
+		return
+
 	ymax = len(grid) - 1
 	xmax = len(grid[0]) - 1
 	flashes = 0
@@ -10,8 +39,8 @@ def main(part1=True):
 		nonlocal grid, ymax, xmax, flashes
 		grid[y][x] = 0
 		flashes += 1
-		for dy in range(-1, 2):
-			for dx in range(-1, 2):
+		for dy in (-1, 0, 1):
+			for dx in (-1, 0, 1):
 				if dy == dx == 0: continue
 				ay = y + dy
 				ax = x + dx
