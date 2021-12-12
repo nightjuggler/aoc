@@ -39,7 +39,7 @@ instructions = {
 
 def read_input(f):
 	line1_pattern = re.compile('^#ip ([012345])$')
-	line_pattern = re.compile('^([a-z]{4}) (0|[1-9][0-9]?) (0|[1-9][0-9]?) ([012345])$')
+	line_pattern = re.compile('^([a-z]{4}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) ([012345])$')
 	line_number = 1
 
 	m = line1_pattern.match(f.readline())

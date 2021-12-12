@@ -81,6 +81,30 @@ def muli(ip, ip_reg, a, b, c):
 
 	return f'reg{c} = reg{a} * {b}'
 
+def bani(ip, ip_reg, a, b, c):
+	if c == ip_reg:
+		if a == c:
+			return f'goto {(ip & b) + 1}'
+
+		return f'goto (reg{a} & {b}) + 1'
+
+	if a == c:
+		return f'reg{c} &= {b}'
+
+	return f'reg{c} = reg{a} & {b}'
+
+def bori(ip, ip_reg, a, b, c):
+	if c == ip_reg:
+		if a == c:
+			return f'goto {(ip | b) + 1}'
+
+		return f'goto (reg{a} | {b}) + 1'
+
+	if a == c:
+		return f'reg{c} |= {b}'
+
+	return f'reg{c} = reg{a} | {b}'
+
 def setr(ip, ip_reg, a, b, c):
 	if c == ip_reg:
 		if a == c:
@@ -98,8 +122,20 @@ def seti(ip, ip_reg, a, b, c):
 
 	return f'reg{c} = {a}'
 
+def gtir(ip, ip_reg, a, b, c):
+	return f'reg{c} = 1 if {a} > reg{b} else 0'
+
+def gtri(ip, ip_reg, a, b, c):
+	return f'reg{c} = 1 if reg{a} > {b} else 0'
+
 def gtrr(ip, ip_reg, a, b, c):
 	return f'reg{c} = 1 if reg{a} > reg{b} else 0'
+
+def eqir(ip, ip_reg, a, b, c):
+	return f'reg{c} = 1 if {a} == reg{b} else 0'
+
+def eqri(ip, ip_reg, a, b, c):
+	return f'reg{c} = 1 if reg{a} == {b} else 0'
 
 def eqrr(ip, ip_reg, a, b, c):
 	return f'reg{c} = 1 if reg{a} == reg{b} else 0'
@@ -109,15 +145,21 @@ instructions = {
 	'addi': addi,
 	'mulr': mulr,
 	'muli': muli,
+	'bani': bani,
+	'bori': bori,
 	'setr': setr,
 	'seti': seti,
+	'gtir': gtir,
+	'gtri': gtri,
 	'gtrr': gtrr,
+	'eqir': eqir,
+	'eqri': eqri,
 	'eqrr': eqrr,
 }
 
 def read_input(f):
 	line1_pattern = re.compile('^#ip ([012345])$')
-	line_pattern = re.compile('^([a-z]{4}) (0|[1-9][0-9]?) (0|[1-9][0-9]?) ([012345])$')
+	line_pattern = re.compile('^([a-z]{4}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) ([012345])$')
 	line_number = 1
 
 	m = line1_pattern.match(f.readline())
