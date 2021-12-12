@@ -2,49 +2,25 @@ import sys
 
 def map_wires(signal_patterns):
 	wires = {c: set('abcdefg') for c in 'abcdefg'}
-	fives = []
-	sixes = []
+	fives = set('abcdefg')
+	sixes = set('abcdefg')
+
+	def update_wires(x, keep, remove):
+		for c in keep:
+			wires[c].intersection_update(x)
+		for c in remove:
+			wires[c].difference_update(x)
+
 	for x in signal_patterns:
 		n = len(x)
-		if n == 2: # digit 1
-			for c in 'cf':
-				wires[c].intersection_update(x)
-			for c in 'abdeg':
-				wires[c].difference_update(x)
-		elif n == 3: # digit 7
-			for c in 'acf':
-				wires[c].intersection_update(x)
-			for c in 'bdeg':
-				wires[c].difference_update(x)
-		elif n == 4: # digit 4
-			for c in 'bcdf':
-				wires[c].intersection_update(x)
-			for c in 'aeg':
-				wires[c].difference_update(x)
-		elif n == 5: # digits 2, 3, and 5
-			fives.append(x)
-		elif n == 6: # digits 0, 6, and 9
-			sixes.append(x)
+		if   n == 2: update_wires(x, 'cf', 'abdeg') # digit 1
+		elif n == 3: update_wires(x, 'acf', 'bdeg') # digit 7
+		elif n == 4: update_wires(x, 'bcdf', 'aeg') # digit 4
+		elif n == 5: fives.intersection_update(x)   # digits 2, 3, and 5
+		elif n == 6: sixes.intersection_update(x)   # digits 0, 6, and 9
 
-	n1, n2, n3 = fives
-	common = []
-	for c in n1:
-		if c in n2 and c in n3:
-			common.append(c)
-	for c in 'adg':
-		wires[c].intersection_update(common)
-	for c in 'bcef':
-		wires[c].difference_update(common)
-
-	n1, n2, n3 = sixes
-	common = []
-	for c in n1:
-		if c in n2 and c in n3:
-			common.append(c)
-	for c in 'abfg':
-		wires[c].intersection_update(common)
-	for c in 'cde':
-		wires[c].difference_update(common)
+	update_wires(fives, 'adg', 'bcef')
+	update_wires(sixes, 'abfg', 'cde')
 
 #	for wire, possible in wires.items():
 #		print(wire, '=>', ', '.join(sorted(possible)))
