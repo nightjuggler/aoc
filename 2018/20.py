@@ -42,12 +42,14 @@ def parse_regex(regex, i, n, parent):
 def main():
 	regex = sys.stdin.readline().rstrip()
 	n = len(regex) - 1
-	assert n > 0
-	assert regex[0] == '^'
-	assert regex[n] == '$'
+	if not (n > 0 and regex[0] == '^' and regex[n] == '$'):
+		print("Expression must begin with '^' and end with '$'!")
+		return
 	parent = ['', [], None]
 	i = parse_regex(regex, 0, n, parent)
-	assert i == n
+	if i != n:
+		print("Parsing ended early: ')' without '(' or early '$'!")
+		return
 
 	rooms = {}
 
@@ -56,8 +58,8 @@ def main():
 			node.append({})
 		directions, branches, node, seen = node
 		yx = (y, x)
-		prev = seen.get(yx)
-		if prev and doors >= prev:
+		min_doors = seen.get(yx)
+		if min_doors and doors >= min_doors:
 			return
 		seen[yx] = doors
 		for d in directions:
@@ -78,10 +80,10 @@ def main():
 
 	traverse(parent, 0, 0, 0)
 
-	print('Part 1:', max(rooms.values()))
+	print('Part 1:', max(rooms.values()) if rooms else 0)
 	n = 0
-	for sp in rooms.values():
-		if sp >= 1000: n += 1
+	for doors in rooms.values():
+		if doors >= 1000: n += 1
 	print('Part 2:', n)
 
 if __name__ == '__main__':
