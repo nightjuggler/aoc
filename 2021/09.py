@@ -42,7 +42,6 @@ def part2():
 	width = len(grid[0]) - 1
 
 	def mark_basin(d, y, x):
-		nonlocal grid, basin, yx2basin
 		yx = (y, x)
 		b = yx2basin.get(yx)
 		if b:
