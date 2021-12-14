@@ -78,8 +78,12 @@ def part2(depth, target_x, target_y):
 	terrain_map = make_terrain_map(depth, target_x, target_y, xmax, ymax)
 	print(sum([sum(row) for row in terrain_map]))
 
-	def process_queue(q, best):
-		while q:
+	q1 = deque()
+	q2 = deque()
+	q1.append((0, 0, 0, 1)) # Start at 0, 0 with torch equipped
+
+	def process_queue(best):
+		while q := q1 or q2:
 			minutes, y, x, tool = q.popleft()
 
 			if best and minutes + abs(target_y - y) + abs(target_x - x) >= best:
@@ -103,16 +107,14 @@ def part2(depth, target_x, target_y):
 
 				adjacent_terrain = terrain_map[ay][ax]
 				if allowed[adjacent_terrain][tool]:
-					q.append((minutes + 1, ay, ax, tool))
+					q1.append((minutes + 1, ay, ax, tool))
 				else:
-					q.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
+					q2.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
 		return best
 
-	q = deque()
-	q.append((0, 0, 0, 1)) # Start at 0, 0 with torch equipped
-	best = process_queue(q, 0)
-
+	best = process_queue(0)
 	print('At most', best, 'minutes')
+
 	ymax = (best - target_x + target_y) // 2
 	xmax = (best - target_y + target_x) // 2
 	print(f'Extending to {xmax} x {ymax}')
@@ -120,25 +122,25 @@ def part2(depth, target_x, target_y):
 	extend_minutes_map(minutes_map, xmax, ymax)
 	terrain_map = make_terrain_map(depth, target_x, target_y, xmax, ymax)
 
-	def queue_adjacent(q, y, x, ay, ax):
+	def queue_adjacent(y, x, ay, ax):
 		terrain = terrain_map[y][x]
 		adjacent_terrain = terrain_map[ay][ax]
 		for tool, minutes in enumerate(minutes_map[y][x]):
 			if minutes:
 				if allowed[adjacent_terrain][tool]:
-					q.append((minutes + 1, ay, ax, tool))
+					q1.append((minutes + 1, ay, ax, tool))
 				else:
-					q.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
+					q2.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
 	if xmax > target_x:
 		x = target_x + 1
 		for y in range(target_y):
-			queue_adjacent(q, y, target_x, y, x)
+			queue_adjacent(y, target_x, y, x)
 	if ymax > target_y:
 		y = target_y + 1
 		for x in range(target_x):
-			queue_adjacent(q, target_y, x, y, x)
+			queue_adjacent(target_y, x, y, x)
 
-	best = process_queue(q, best)
+	best = process_queue(best)
 	print(best, 'minutes')
 
 def main():
