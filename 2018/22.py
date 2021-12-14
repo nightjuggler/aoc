@@ -72,15 +72,13 @@ def part2(depth, target_x, target_y):
 		(2, None, 0),
 		(1, 0, None),
 	)
-	best = 0
 	ymax = target_y
 	xmax = target_x
 	minutes_map = make_minutes_map(xmax, ymax)
 	terrain_map = make_terrain_map(depth, target_x, target_y, xmax, ymax)
 	print(sum([sum(row) for row in terrain_map]))
 
-	def process(q):
-		nonlocal best
+	def process_queue(q, best):
 		while q:
 			minutes, y, x, tool = q.popleft()
 
@@ -108,10 +106,11 @@ def part2(depth, target_x, target_y):
 					q.append((minutes + 1, ay, ax, tool))
 				else:
 					q.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
+		return best
 
 	q = deque()
 	q.append((0, 0, 0, 1)) # Start at 0, 0 with torch equipped
-	process(q)
+	best = process_queue(q, 0)
 
 	print('At most', best, 'minutes')
 	ymax = (best - target_x + target_y) // 2
@@ -138,7 +137,8 @@ def part2(depth, target_x, target_y):
 		y = target_y + 1
 		for x in range(target_x):
 			queue_adjacent(q, target_y, x, y, x)
-	process(q)
+
+	best = process_queue(q, best)
 	print(best, 'minutes')
 
 def main():
