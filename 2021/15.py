@@ -1,4 +1,4 @@
-from collections import deque
+from heapq import heappush, heappop
 import sys
 
 def read_input():
@@ -10,40 +10,28 @@ def solve(grid):
 	print(size, 'x', size)
 
 	best = [[-1] * size for row in grid]
-
-	queues = [deque() for i in range(9)]
-	queues[0].append((0, 0, 0))
+	q = []
+	heappush(q, (0, 0, 0))
 
 	def process_queue():
-		while True:
-			for q in queues:
-				if q: break
-			else:
-				return
-			y, x, risk = q.popleft()
+		while q:
+			risk, y, x = heappop(q)
 
-			if 0 <= best[y][x] <= risk:
-				continue
+			if 0 <= best[y][x] <= risk: continue
 			best[y][x] = risk
 
 			for ay, ax in ((y,x+1), (y+1,x), (y,x-1), (y-1,x)):
 				if ay < 0 or ay >= size: continue
 				if ax < 0 or ax >= size: continue
-				r = grid[ay][ax]
-				queues[r-1].append((ay, ax, risk + r))
+				heappush(q, (risk + grid[ay][ax], ay, ax))
 
 	full_size = size
-	chunk_size = 10
 	size = 0
 	while size < full_size:
 		for i in range(size):
-			risk = best[i][size-1]
-			r = grid[i][size]
-			queues[r-1].append((i, size, risk + r))
-			risk = best[size-1][i]
-			r = grid[size][i]
-			queues[r-1].append((size, i, risk + r))
-		size = min(size + chunk_size, full_size)
+			heappush(q, (best[i][size-1] + grid[i][size], i, size))
+			heappush(q, (best[size-1][i] + grid[size][i], size, i))
+		size = min(size + 10, full_size)
 		process_queue()
 
 	return best[size-1][size-1]
