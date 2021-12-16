@@ -1,4 +1,4 @@
-from collections import deque
+from heapq import heappush, heappop
 
 def part1(depth, target_x, target_y, draw_map=0):
 	terrain = ('.', '=', '|') # rocky, wet, narrow
@@ -78,13 +78,12 @@ def part2(depth, target_x, target_y):
 	terrain_map = make_terrain_map(depth, target_x, target_y, xmax, ymax)
 	print(sum([sum(row) for row in terrain_map]))
 
-	q1 = deque()
-	q2 = deque()
-	q1.append((0, 0, 0, 1)) # Start at 0, 0 with torch equipped
+	q = []
+	heappush(q, (0, 0, 0, 1)) # Start at 0, 0 with torch equipped
 
 	def process_queue(best):
-		while q := q1 or q2:
-			minutes, y, x, tool = q.popleft()
+		while q:
+			minutes, y, x, tool = heappop(q)
 
 			if best and minutes + abs(target_y - y) + abs(target_x - x) >= best:
 				continue
@@ -107,9 +106,9 @@ def part2(depth, target_x, target_y):
 
 				adjacent_terrain = terrain_map[ay][ax]
 				if allowed[adjacent_terrain][tool]:
-					q1.append((minutes + 1, ay, ax, tool))
+					heappush(q, (minutes + 1, ay, ax, tool))
 				else:
-					q2.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
+					heappush(q, (minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
 		return best
 
 	best = process_queue(0)
@@ -128,9 +127,9 @@ def part2(depth, target_x, target_y):
 		for tool, minutes in enumerate(minutes_map[y][x]):
 			if minutes:
 				if allowed[adjacent_terrain][tool]:
-					q1.append((minutes + 1, ay, ax, tool))
+					heappush(q, (minutes + 1, ay, ax, tool))
 				else:
-					q2.append((minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
+					heappush(q, (minutes + 8, ay, ax, switch[terrain][adjacent_terrain]))
 	if xmax > target_x:
 		x = target_x + 1
 		for y in range(target_y):
