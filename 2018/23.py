@@ -32,6 +32,48 @@ def part1(bots):
 
 	print(n, 'nanobots are in range of the nanobot with the largest signal radius.')
 
+# If we have 3 equations like the following:
+#
+# a1*x + b1*y + c1*z = d1
+# a2*x + b2*y + c2*z = d2
+# a3*x + b3*y + c3*z = d3
+#
+#              | a1 b1 c1 |         | x |         | d1 |
+# Then let A = | a2 b2 c2 | and X = | y | and D = | d2 |
+#              | a3 b3 c3 |         | z |         | d3 |
+#
+# So A * X = D
+#
+# Thus X = D multiplied by the inverse of A
+# We can use Cramer's rule to solve for x, y, and z
+
+def det(a, b, c, d, e, f, g, h, i):
+	# Determinant for a 3x3 matrix
+	# | a b c |
+	# | d e f |
+	# | g h i |
+	return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
+
+def cramers_rule(coeffs):
+	m = []
+	n = []
+	for abc, d in coeffs.items():
+		m.extend(abc)
+		n.append(d)
+		if len(n) == 3: break
+	if len(n) != 3:
+		return None
+	D = det(*m)
+	if not D:
+		return None
+	s = []
+	for i in range(3):
+		c = m[i::3]
+		m[i::3] = n
+		s.append(det(*m) // D)
+		m[i::3] = c
+	return s
+
 def solve(bots, indices):
 	bots_len = len(indices)
 	# Not necessary to determine the min/max x,y,z to solve the puzzle, but they can be
@@ -75,13 +117,16 @@ def solve(bots, indices):
 				c = 1 if z2 <= z1 else -1
 				d = r2 + a*x2 + b*y2 + c*z2
 				abc = (a, b, c)
-				if d < 0 and abc != (1, 1, 1):
+				if d < 0 and abc != (1, 1, 1) or abc == (-1,-1,-1):
 					abc, d = (-a, -b, -c), -d
 				coeffs[abc] = d
 
+	if not coeffs:
+		print('Unable to solve for x, y, and z!')
+		return
+
 	for m, c in zip(minmax, 'xyz'):
-		if m:
-			print('{:,}'.format(m[0]), '<=', c, '<=', '{:,}'.format(m[1]))
+		print(f'{m[0]:,} <= {c} <= {m[1]:,}')
 
 	print('To find x, y, and z, solve the following equations:')
 	for (a, b, c), d in coeffs.items():
@@ -90,13 +135,20 @@ def solve(bots, indices):
 		c = '' if c == 1 else '-'
 		print(f'{a}x + {b}y + {c}z = {d}')
 
-	print('But we only need the sum of x, y, and z!')
-	d = coeffs.get((1, 1, 1))
-	if not d:
-		print('No equation of the form x + y + z = d!')
+	xyz = cramers_rule(coeffs)
+	if not xyz:
+		print('Unable to use Cramer\'s rule to solve for x, y, and z!')
+		if not all([m[0] >= 0 for m in minmax]):
+			return
+		d = coeffs.get((1, 1, 1))
+		if d is not None:
+			print('However, since we\'ve determined that x, y, and z must all be non-negative,')
+			print('and we have an equation for x + y + z, the answer is', d)
 		return
 
-	print('So the answer is', d)
+	print('x, y, z = ({})'.format(', '.join(map(str, xyz))))
+	d = sum(map(abs, xyz))
+	print('So the answer is |x| + |y| + |z| =', d)
 
 def part2(bots):
 	bots.sort(reverse=True)
@@ -145,7 +197,8 @@ def part2(bots):
 	else:
 		print('There are', len(max_size_sets), 'different sets of that size.')
 
-	for indices in max_size_sets:
+	for i, indices in enumerate(max_size_sets, start=1):
+		print(f'-------------------- Set #{i} --------------------')
 		solve(bots, indices)
 
 # The puzzle input results in the following three equations:
