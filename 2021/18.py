@@ -1,7 +1,8 @@
 import sys
 
 class ParseError(Exception):
-	pass
+	def __init__(self, s, i, c):
+		super().__init__(f'Failed to parse "{s}": Expected a {c} in column {i+1}!')
 
 class Node(object):
 	def __init__(self, parent, value=None):
@@ -15,42 +16,39 @@ class Node(object):
 			return str(self.value)
 		return ''.join(('[', str(self.left), ',', str(self.right), ']'))
 
-	def magnitude(self):
+	def __abs__(self):
 		if self.value is not None:
 			return self.value
-		return 3 * self.left.magnitude() + 2 * self.right.magnitude()
+		return 3 * abs(self.left) + 2 * abs(self.right)
 
-def parse(line, i, parent):
+def parse(line, i, parent, depth=0):
 	node = Node(parent)
-	if line[i] != '[':
-		print('Expected a left bracket in column', i)
-		raise ParseError()
+	max_i = len(line) - 1
+
+	def child():
+		if depth == 4:
+			if i > max_i or line[i] not in '0123456789':
+				raise ParseError(line, i, 'digit')
+		else:
+			if i > max_i or line[i] not in '0123456789[':
+				raise ParseError(line, i, 'digit or left bracket')
+			if line[i] == '[':
+				return parse(line, i, node, depth+1)
+
+		return i, Node(node, int(line[i]))
+
+	if i > max_i or line[i] != '[':
+		raise ParseError(line, i, 'left bracket')
 	i += 1
-	if line[i] == '[':
-		i, n = parse(line, i, node)
-		node.left = n
-	elif line[i] in '0123456789':
-		node.left = Node(node, int(line[i]))
-	else:
-		print('Expected a digit or left bracket in column', i)
-		raise ParseError()
+	i, node.left = child()
 	i += 1
-	if line[i] != ',':
-		print('Expected a comma in column', i)
-		raise ParseError()
+	if i > max_i or line[i] != ',':
+		raise ParseError(line, i, 'comma')
 	i += 1
-	if line[i] == '[':
-		i, n = parse(line, i, node)
-		node.right = n
-	elif line[i] in '0123456789':
-		node.right = Node(node, int(line[i]))
-	else:
-		print('Expected a digit or left bracket in column', i)
-		raise ParseError()
+	i, node.right = child()
 	i += 1
-	if line[i] != ']':
-		print('Expected a right bracket in column', i)
-		raise ParseError()
+	if i > max_i or line[i] != ']':
+		raise ParseError(line, i, 'right bracket')
 	return i, node
 
 def read_input():
@@ -64,7 +62,8 @@ def read_input():
 		numbers.append(line)
 	return numbers
 
-def add_left(node, value):
+def add_left(node):
+	value = node.left.value
 	while True:
 		parent = node.parent
 		if not parent:
@@ -78,13 +77,14 @@ def add_left(node, value):
 		node = node.right
 	node.value += value
 
-def add_right(node, value):
+def add_right(node):
+	value = node.right.value
 	while True:
 		parent = node.parent
 		if not parent:
 			return
 		if parent.right is node:
-			node = node.parent
+			node = parent
 		else:
 			break
 	node = parent.right
@@ -96,20 +96,15 @@ def explode(node, depth):
 	if not node or node.value is not None:
 		return False
 	if depth == 4:
-		left = node.left.value
-		right = node.right.value
-		if left is None or right is None:
-			print('Node at depth 4 must be a pair of regular numbers!')
-			raise ParseError()
-		add_left(node, left)
-		add_right(node, right)
+		add_left(node)
+		add_right(node)
 		node.left = None
 		node.right = None
 		node.value = 0
 		return True
 	return explode(node.left, depth+1) or explode(node.right, depth+1)
 
-def snail_split(node):
+def split(node):
 	if not node:
 		return False
 	if node.value is not None:
@@ -119,16 +114,16 @@ def snail_split(node):
 			node.value = None
 			return True
 		return False
-	return snail_split(node.left) or snail_split(node.right)
+	return split(node.left) or split(node.right)
 
-def snail_reduce(node):
-	while explode(node, 0) or snail_split(node): pass
+def reduce(node):
+	while explode(node, 0) or split(node): pass
 
 def add(n1, n2):
 	n1.parent = n2.parent = node = Node(None)
 	node.left = n1
 	node.right = n2
-	snail_reduce(node)
+	reduce(node)
 	return node
 
 def test_reduce():
@@ -140,7 +135,7 @@ def test_reduce():
 		('[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]', '[[[[0,7],4],[[7,8],[6,0]]],[8,1]]'),
 	):
 		i, node = parse(example, 0, None)
-		snail_reduce(node)
+		reduce(node)
 		if str(node) != expected:
 			print('Node', example, '=>', node, 'instead of', expected)
 
@@ -152,7 +147,7 @@ def part1(numbers):
 
 	print('-------------------- Part 1 --------------------')
 	print('The reduced sum is', n1)
-	print('The magnitude is', n1.magnitude())
+	print('The magnitude is', abs(n1))
 
 def part2(numbers):
 	max_mag = 0
@@ -163,7 +158,7 @@ def part2(numbers):
 			k, n1 = parse(s1, 0, None)
 			k, n2 = parse(s2, 0, None)
 			n1 = add(n1, n2)
-			m = n1.magnitude()
+			m = abs(n1)
 			if m >= max_mag:
 				if m > max_mag:
 					max_mag = m
@@ -179,9 +174,11 @@ def part2(numbers):
 def main():
 	numbers = read_input()
 	if not numbers: return
-
-	part1(numbers)
-	part2(numbers)
+	try:
+		part1(numbers)
+		part2(numbers)
+	except ParseError as e:
+		print(e)
 
 if __name__ == '__main__':
 	main()
