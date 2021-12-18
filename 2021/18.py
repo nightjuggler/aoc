@@ -21,6 +21,13 @@ class Node(object):
 			return self.value
 		return 3 * abs(self.left) + 2 * abs(self.right)
 
+	def copy(self, parent=None):
+		node = Node(parent, self.value)
+		if self.value is None:
+			node.left = self.left.copy(node)
+			node.right = self.right.copy(node)
+		return node
+
 def parse(line, i, parent, depth=0):
 	node = Node(parent)
 	max_i = len(line) - 1
@@ -120,9 +127,9 @@ def reduce(node):
 	while explode(node, 0) or split(node): pass
 
 def add(n1, n2):
-	n1.parent = n2.parent = node = Node(None)
-	node.left = n1
-	node.right = n2
+	node = Node(None)
+	node.left = n1.copy(node)
+	node.right = n2.copy(node)
 	reduce(node)
 	return node
 
@@ -134,36 +141,34 @@ def test_reduce():
 		('[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]', '[[3,[2,[8,0]]],[9,[5,[7,0]]]]'),
 		('[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]', '[[[[0,7],4],[[7,8],[6,0]]],[8,1]]'),
 	):
-		i, node = parse(example, 0, None)
+		node = parse(example, 0, None)[1]
 		reduce(node)
 		if str(node) != expected:
 			print('Node', example, '=>', node, 'instead of', expected)
 
 def part1(numbers):
-	i, n1 = parse(numbers[0], 0, None)
-	for j in range(1, len(numbers)):
-		i, n2 = parse(numbers[j], 0, None)
-		n1 = add(n1, n2)
+	n = parse(numbers[0], 0, None)[1]
+	for i in range(1, len(numbers)):
+		n = add(n, parse(numbers[i], 0, None)[1])
 
 	print('-------------------- Part 1 --------------------')
-	print('The reduced sum is', n1)
-	print('The magnitude is', abs(n1))
+	print('The reduced sum is', n)
+	print('The magnitude is', abs(n))
 
 def part2(numbers):
 	max_mag = 0
 	max_mag_pairs = []
-	for i, s1 in enumerate(numbers):
-		for j, s2 in enumerate(numbers):
+	parsed = [parse(n, 0, None)[1] for n in numbers]
+	for i, n1 in enumerate(parsed):
+		for j, n2 in enumerate(parsed):
 			if i == j: continue
-			k, n1 = parse(s1, 0, None)
-			k, n2 = parse(s2, 0, None)
-			n1 = add(n1, n2)
-			m = abs(n1)
+			n = add(n1, n2)
+			m = abs(n)
 			if m >= max_mag:
 				if m > max_mag:
 					max_mag = m
 					max_mag_pairs.clear()
-				max_mag_pairs.append((s1, s2, str(n1)))
+				max_mag_pairs.append((numbers[i], numbers[j], str(n)))
 
 	print('-------------------- Part 2 --------------------')
 	print('The largest magnitude is', max_mag)
