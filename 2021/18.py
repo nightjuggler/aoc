@@ -136,19 +136,6 @@ def add(n1, n2):
 	reduce(node)
 	return node
 
-def test_reduce():
-	for example, expected in (
-		('[[[[[9,8],1],2],3],4]', '[[[[0,9],2],3],4]'),
-		('[7,[6,[5,[4,[3,2]]]]]', '[7,[6,[5,[7,0]]]]'),
-		('[[6,[5,[4,[3,2]]]],1]', '[[6,[5,[7,0]]],3]'),
-		('[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]', '[[3,[2,[8,0]]],[9,[5,[7,0]]]]'),
-		('[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]', '[[[[0,7],4],[[7,8],[6,0]]],[8,1]]'),
-	):
-		node = parse(example)
-		reduce(node)
-		if str(node) != expected:
-			print('Node', example, '=>', node, 'instead of', expected)
-
 def part1(numbers):
 	n = parse(numbers[0])
 	for i in range(1, len(numbers)):
