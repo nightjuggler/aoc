@@ -28,35 +28,38 @@ class Node(object):
 			node.right = self.right.copy(node)
 		return node
 
-def parse(line, i, parent, depth=0):
+def _parse(s, i, parent, depth):
 	node = Node(parent)
-	max_i = len(line) - 1
+	max_i = len(s) - 1
 
 	def child():
 		if depth == 4:
-			if i > max_i or line[i] not in '0123456789':
-				raise ParseError(line, i, 'digit')
+			if i > max_i or s[i] not in '0123456789':
+				raise ParseError(s, i, 'digit')
 		else:
-			if i > max_i or line[i] not in '0123456789[':
-				raise ParseError(line, i, 'digit or left bracket')
-			if line[i] == '[':
-				return parse(line, i, node, depth+1)
+			if i > max_i or s[i] not in '0123456789[':
+				raise ParseError(s, i, 'digit or left bracket')
+			if s[i] == '[':
+				return _parse(s, i, node, depth+1)
 
-		return i, Node(node, int(line[i]))
+		return i, Node(node, int(s[i]))
 
-	if i > max_i or line[i] != '[':
-		raise ParseError(line, i, 'left bracket')
+	if i > max_i or s[i] != '[':
+		raise ParseError(s, i, 'left bracket')
 	i += 1
 	i, node.left = child()
 	i += 1
-	if i > max_i or line[i] != ',':
-		raise ParseError(line, i, 'comma')
+	if i > max_i or s[i] != ',':
+		raise ParseError(s, i, 'comma')
 	i += 1
 	i, node.right = child()
 	i += 1
-	if i > max_i or line[i] != ']':
-		raise ParseError(line, i, 'right bracket')
+	if i > max_i or s[i] != ']':
+		raise ParseError(s, i, 'right bracket')
 	return i, node
+
+def parse(s):
+	return _parse(s, 0, None, 0)[1]
 
 def read_input():
 	numbers = []
@@ -141,15 +144,15 @@ def test_reduce():
 		('[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]', '[[3,[2,[8,0]]],[9,[5,[7,0]]]]'),
 		('[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]', '[[[[0,7],4],[[7,8],[6,0]]],[8,1]]'),
 	):
-		node = parse(example, 0, None)[1]
+		node = parse(example)
 		reduce(node)
 		if str(node) != expected:
 			print('Node', example, '=>', node, 'instead of', expected)
 
 def part1(numbers):
-	n = parse(numbers[0], 0, None)[1]
+	n = parse(numbers[0])
 	for i in range(1, len(numbers)):
-		n = add(n, parse(numbers[i], 0, None)[1])
+		n = add(n, parse(numbers[i]))
 
 	print('-------------------- Part 1 --------------------')
 	print('The reduced sum is', n)
@@ -158,7 +161,7 @@ def part1(numbers):
 def part2(numbers):
 	max_mag = 0
 	max_mag_pairs = []
-	parsed = [parse(n, 0, None)[1] for n in numbers]
+	parsed = [parse(n) for n in numbers]
 	for i, n1 in enumerate(parsed):
 		for j, n2 in enumerate(parsed):
 			if i == j: continue
