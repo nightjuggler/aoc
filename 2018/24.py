@@ -108,14 +108,42 @@ def fight(army1, army2):
 			g2.army.groups.remove(g2)
 	return True
 
-def war(army1, army2):
+def war(army1, army2, prefix):
 	while army1.groups and army2.groups:
 		if not fight(army1, army2):
+			print(f'{prefix}: Stalemate, no winner!')
+			assert all([g1.attack in g2.immunities
+				for g1 in army1.groups
+				for g2 in army2.groups])
+			assert all([g2.attack in g1.immunities
+				for g2 in army2.groups
+				for g1 in army1.groups])
 			return None, None
 
 	winner = army1 if army1.groups else army2
 	units = sum([g.units for g in winner.groups])
+	print(f'{prefix}: {winner.name} wins with {units} units remaining')
 	return winner, units
+
+def get_max_boost(*armies):
+	table, units, hitpoints, power = [], [], [], []
+	for army in armies:
+		table.append([army.name])
+		units.append(sum([g.units for g in army.groups]))
+		power.append(sum([g.units * g.damage for g in army.groups]))
+		hitpoints.append(sum([g.units * g.hitpoints for g in army.groups]))
+
+	for row, *values in zip(table, units, power, hitpoints):
+		row.extend(['{:,}'.format(value) for value in values])
+
+	table.insert(0, ['', 'Units', 'Power', 'Hitpoints'])
+
+	specs = ['{{:>{}}}'.format(max([len(row[i]) for row in table])) for i in range(4)]
+
+	for row in table:
+		print(' | '.join([spec.format(value) for spec, value in zip(specs, row)]))
+
+	return (hitpoints[1] - power[0]) // units[0] + 1
 
 def main():
 	armies = read_input()
@@ -132,22 +160,10 @@ def main():
 	if army1.name != 'Immune System':
 		army1, army2 = army2, army1
 
-	units1 = sum([g.units for g in army1.groups])
-	units2 = sum([g.units for g in army2.groups])
-	power1 = sum([g.units * g.damage for g in army1.groups])
-	hitpoints2 = sum([g.units * g.hitpoints for g in army2.groups])
-
-	print(f'{army1.name} power = {power1} ({units1} units)')
-	print(f'{army2.name} hitpoints = {hitpoints2} ({units2} units)')
-
-	winner, units = war(army1, army2)
-	if winner:
-		print(f'Part 1: {winner.name} wins with {units} units remaining')
-	else:
-		print('Part 1: Stalemate, no winner!')
-
 	min_boost = 1
-	max_boost = (hitpoints2 - power1) // units1 + 1
+	max_boost = get_max_boost(army1, army2)
+
+	war(army1, army2, 'Part 1')
 
 	answer = None
 	while min_boost <= max_boost:
@@ -161,17 +177,7 @@ def main():
 		for g in army2.groups:
 			g.units = g.initial_units
 
-		winner, units = war(army1, army2)
-		if winner:
-			print(f'boost = {boost}: {winner.name} wins with {units} units remaining')
-		else:
-			print(f'boost = {boost}: Stalemate, no winner!')
-			assert all([g1.attack in g2.immunities
-				for g1 in army1.groups
-				for g2 in army2.groups])
-			assert all([g2.attack in g1.immunities
-				for g2 in army2.groups
-				for g1 in army1.groups])
+		winner, units = war(army1, army2, f'boost = {boost}')
 		if winner is army1:
 			max_boost = boost - 1
 			answer = boost, units
