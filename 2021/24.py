@@ -7,8 +7,7 @@ def op_div(a, b): return f'{a} //= {b}' # f'{a} = int({a} / {b})'
 def op_mod(a, b): return f'{a} %= {b}'
 def op_eql(a, b): return f'{a} = int({a} == {b})'
 def op_neq(a, b): return f'{a} = int({a} != {b})'
-def op_set(a, b): return f'{a} = {b}'
-def op_set2(a, args): return ' '.join([a, '=', *args])
+def op_set(a, b): return ' '.join([a, '=', *b])
 
 instructions = {
 	'add': op_add,
@@ -47,7 +46,7 @@ def read_input():
 			prev_op, prev_arg = prev[0], prev[2]
 			if prev_op is op_mul:
 				if op == 'add' and prev_arg == '0':
-					section[-1] = (op_set, arg0, arg1)
+					section[-1] = (op_set, arg0, [arg1])
 					continue
 			elif prev_op is op_set:
 				op_arg = (
@@ -55,14 +54,10 @@ def read_input():
 					'*' if op == 'mul' else
 					'%' if op == 'mod' else None)
 				if op_arg:
-					section[-1] = (op_set2, arg0, [prev_arg, op_arg, arg1])
-					continue
-			elif prev_op is op_set2:
-				if op == 'add':
-					prev_arg.extend(('+', arg1))
-					continue
-				if op == 'mul':
-					prev_arg[:] = ['({})'.format(' '.join(prev_arg)), '*', arg1]
+					if len(prev_arg) == 1 or prev_arg[-2] != '+' or op_arg == '+':
+						prev_arg.extend((op_arg, arg1))
+					else:
+						prev_arg[:] = ['({})'.format(' '.join(prev_arg)), op_arg, arg1]
 					continue
 			elif prev_op is op_eql:
 				if op == 'eql' and arg1 == '0':
