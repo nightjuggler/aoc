@@ -32,7 +32,7 @@ def read_input():
 def move(grid):
 	y_len = len(grid)
 	x_len = len(grid[0])
-	change = False
+	moved = False
 	new_grid = [row.copy() for row in grid]
 	for row, new_row in zip(grid, new_grid):
 		for x in range(x_len):
@@ -41,7 +41,7 @@ def move(grid):
 				if row[next_x] == 0:
 					new_row[x] = 0
 					new_row[next_x] = 1
-					change = True
+					moved = True
 	grid = new_grid
 	new_grid = [row.copy() for row in grid]
 	for y, row in enumerate(grid):
@@ -51,8 +51,8 @@ def move(grid):
 				if grid[next_y][x] == 0:
 					new_grid[y][x] = 0
 					new_grid[next_y][x] = 2
-					change = True
-	return change, new_grid
+					moved = True
+	return moved, new_grid
 
 def main():
 	grid = read_input()
@@ -60,9 +60,9 @@ def main():
 
 	step = 0
 	while True:
-		change, grid = move(grid)
+		moved, grid = move(grid)
 		step += 1
-		if not change:
+		if not moved:
 			break
 	print(step)
 
