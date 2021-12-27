@@ -19,8 +19,14 @@ def process_queue(q):
 				return False
 
 		grid = [list(row) for row in grid]
-		grid[y1][x1] = 0
-		grid[y2][x2] = amp
+		if y1:
+			grid[x1//2][y1-1] = 0
+		else:
+			grid[0][x1] = 0
+		if y2:
+			grid[x2//2][y2-1] = amp
+		else:
+			grid[0][x2] = amp
 		grid = tuple([tuple(row) for row in grid])
 
 		heappush(q, (energy + steps * 10**(amp-1), grid))
@@ -37,29 +43,41 @@ def process_queue(q):
 			continue
 		state_cache[grid] = energy
 
-		done = True
-		gridlen = len(grid)
-		amphipods = [(x, y, amp) for y, row in enumerate(grid)
-			for x, amp in enumerate(row) if amp]
+		room_size = len(grid[1])
+		room_y = [0] * 5
+		move_from_room = []
 
-		for x, y, amp in amphipods:
-			room_x = 2 * amp
-			if x != room_x:
-				done = False
-			if y and grid[y-1][x]:
-				continue
-			if x == room_x:
-				if all([grid[i][x] == amp for i in range(y+1, gridlen)]):
-					continue
+		for amp in range(1, 5):
+			room = grid[amp]
+			y = 0
+			while y != room_size:
+				if occupant := room[y]: break
+				y += 1
 			else:
-				for i in range(gridlen-1, 0, -1):
-					if (occupant := grid[i][room_x]) != amp: break
-
-				if not occupant and try_move(energy, grid, amp, x, y, room_x, i):
+				room_y[amp] = y
+				continue
+			if occupant == amp:
+				y2 = y + 1
+				while y2 != room_size:
+					if room[y2] != amp: break
+					y2 += 1
+				else:
+					room_y[amp] = y
 					continue
-			if y:
-				for x2 in (0, 1, 3, 5, 7, 9, 10):
-					try_move(energy, grid, amp, x, y, x2, 0)
+
+			move_from_room.append((2*amp, y+1, occupant))
+
+		for x, amp in enumerate(grid[0]):
+			if y2 := room_y[amp]:
+				try_move(energy, grid, amp, x, 0, 2*amp, y2)
+
+		for x, y, amp in move_from_room:
+			if ((y2 := room_y[amp]) and
+				try_move(energy, grid, amp, x, y, 2*amp, y2)): continue
+			for x2 in (0, 1, 3, 5, 7, 9, 10):
+				try_move(energy, grid, amp, x, y, x2, 0)
+
+		done = not (move_from_room or any(room_y))
 
 		if done and (best_energy is None or energy < best_energy):
 			best_energy = energy
@@ -82,12 +100,9 @@ def read_input():
 	return amphipods
 
 def make_grid(amphipods):
+	base = ord('A') - 1
 	grid = [(0,) * 11]
-	for amps in amphipods:
-		row = [0] * 11
-		for i, letter in enumerate(amps, start=1):
-			row[2*i] = ord(letter) - ord('A') + 1
-		grid.append(tuple(row))
+	grid.extend([tuple([ord(letter) - base for letter in room]) for room in zip(*amphipods)])
 	return tuple(grid)
 
 def main():
