@@ -134,14 +134,14 @@ def get_max_boost(*armies):
 		hitpoints.append(sum([g.units * g.hitpoints for g in army.groups]))
 
 	for row, *values in zip(table, units, power, hitpoints):
-		row.extend(['{:,}'.format(value) for value in values])
+		row.extend([format(value, ',') for value in values])
 
 	table.insert(0, ['', 'Units', 'Power', 'Hitpoints'])
 
-	specs = ['{{:>{}}}'.format(max([len(row[i]) for row in table])) for i in range(4)]
+	specs = ['>{}'.format(max(map(len, column))) for column in zip(*table)]
 
 	for row in table:
-		print(' | '.join([spec.format(value) for spec, value in zip(specs, row)]))
+		print(' | '.join(map(format, row, specs)))
 
 	return (hitpoints[1] - power[0]) // units[0] + 1
 
