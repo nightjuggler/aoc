@@ -126,7 +126,7 @@ def war(army1, army2, prefix):
 	return winner, units
 
 def get_max_boost(*armies):
-	table, units, hitpoints, power = [], [], [], []
+	table, units, power, hitpoints = [], [], [], []
 	for army in armies:
 		table.append([army.name])
 		units.append(sum([g.units for g in army.groups]))
@@ -138,7 +138,7 @@ def get_max_boost(*armies):
 
 	table.insert(0, ['', 'Units', 'Power', 'Hitpoints'])
 
-	specs = ['>{}'.format(max(map(len, column))) for column in zip(*table)]
+	specs = [f'>{max(map(len, column))}' for column in zip(*table)]
 
 	for row in table:
 		print(' | '.join(map(format, row, specs)))
@@ -147,8 +147,10 @@ def get_max_boost(*armies):
 
 def main():
 	armies = read_input()
-	if not armies or len(armies) != 2:
-		print(f'There must be exactly two armies!')
+	if armies is None:
+		return
+	if len(armies) != 2:
+		print('There must be exactly two armies!')
 		return
 
 	army1, army2 = armies
