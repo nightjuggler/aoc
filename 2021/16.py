@@ -80,7 +80,7 @@ def parse_packet(b, i, depth):
 	return ops[type_id](args), i
 
 def main():
-	bitstr = ''.join(['{:04b}'.format(int(c, 16)) for c in sys.stdin.readline().rstrip()])
+	bitstr = ''.join([format(int(c, 16), '04b') for c in sys.stdin.readline().rstrip()])
 	value, i = parse_packet(bitstr, 0, 0)
 	print('Part 1: version sum =', version_sum)
 	print('Part 2: expression value =', value)
