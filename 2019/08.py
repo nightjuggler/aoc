@@ -1,17 +1,17 @@
 import sys
 
 def get_layers(size):
-	line = sys.stdin.readline()
-	line_len = len(line) // size * size
-	if line_len < size or line[line_len:].rstrip():
+	line = sys.stdin.readline().rstrip()
+	line_len = len(line)
+	if not line or line_len % size:
 		raise SystemExit(f'Expected one or more layers of exactly {size} digits!')
-	if not all([line[i] in '0123456789' for i in range(line_len)]):
-		raise SystemExit('Expected only decimal digits!')
+	if line.rstrip('012'):
+		raise SystemExit('Expected only the digits 0, 1, and 2!')
 
 	return [list(map(int, line[i:i+size])) for i in range(0, line_len, size)]
 
 def zeros(digits):
-	count = [0] * 10
+	count = [0] * 3
 	for d in digits:
 		count[d] += 1
 	return count[0], count[1] * count[2]
@@ -30,10 +30,8 @@ def main():
 			if image[i] == 2 and layer[i] != 2:
 				image[i] = layer[i]
 
-	i2a = [' ', '#', ' ']
-
 	print('Part 2:')
 	for j in range(0, size, width):
-		print(''.join([i2a[image[j + i]] for i in range(width)]))
+		print(''.join([' # '[image[j + i]] for i in range(width)]))
 
 main()
