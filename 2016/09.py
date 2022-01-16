@@ -8,11 +8,9 @@ def decompress(s, recurse):
 		if i == slen or s[i] not in '123456789':
 			raise SystemExit(f'Expected a digit (1-9) at position {i}!')
 		j = i + 1
-		while j < slen and s[j] != c:
-			if s[j] not in '0123456789':
-				raise SystemExit(f"Expected a digit or '{c}' at position {j}!")
+		while j < slen and s[j] in '0123456789':
 			j += 1
-		if j == slen:
+		if j == slen or s[j] != c:
 			raise SystemExit(f"Expected a digit or '{c}' at position {j}!")
 		return j + 1, int(s[i:j])
 
@@ -26,11 +24,11 @@ def decompress(s, recurse):
 
 			dlen += (decompress(s[i:i+seqlen], True) if recurse else seqlen) * repeat
 			i += seqlen
-		elif s[i] not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-			raise SystemExit(f'Expected an uppercase letter at position {i}!')
-		else:
+		elif s[i] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
 			dlen += 1
 			i += 1
+		else:
+			raise SystemExit(f'Expected an uppercase letter or open paren at position {i}!')
 	return dlen
 
 def main():
