@@ -24,14 +24,14 @@ def main():
 
 	print('Part 1:', sorted(map(zeros, layers))[0][1])
 
-	image = [2] * size
-	for layer in layers:
-		for i in range(size):
-			if image[i] == 2 and layer[i] != 2:
-				image[i] = layer[i]
+	def pixel(i):
+		for layer in layers:
+			if layer[i] != 2:
+				return ' #'[layer[i]]
+		return ' '
 
 	print('Part 2:')
-	for j in range(0, size, width):
-		print(''.join([' # '[image[j + i]] for i in range(width)]))
+	for i in range(0, size, width):
+		print(''.join(map(pixel, range(i, i + width))))
 
 main()
