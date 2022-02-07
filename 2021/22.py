@@ -20,25 +20,18 @@ def read_input():
 	return cuboids
 
 def segment(ax1, ax2, bx1, bx2):
-	if ax1 <= bx1 <= ax2:
-		x = []
-		if bx1 > ax1:
-			x.append((False, ax1, bx1-1))
-		if ax2 > bx2:
-			x.append((True, bx1, bx2))
-			x.append((False, bx2+1, ax2))
-		else:
-			x.append((True, bx1, ax2))
-		return x
-	if ax1 <= bx2 <= ax2:
-		x = [(True, ax1, bx2)]
-		if ax2 > bx2:
-			x.append((False, bx2+1, ax2))
-		return x
-	if bx1 < ax1 < bx2: # implies ax2 < bx2
-		return [(True, ax1, ax2)]
-
-	return None
+	if ax2 < bx1 or ax1 > bx2:
+		return None
+	x = []
+	if ax1 < bx1:
+		x.append((False, ax1, bx1-1))
+		ax1 = bx1
+	if bx2 < ax2:
+		x.append((True, ax1, bx2))
+		x.append((False, bx2+1, ax2))
+	else:
+		x.append((True, ax1, ax2))
+	return x
 
 def solve(cuboids):
 	regions = []
