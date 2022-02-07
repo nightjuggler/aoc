@@ -7,11 +7,10 @@ def read_input():
 	line_pattern = re.compile(f'^(on|off) x={r},y={r},z={r}$')
 
 	cuboids = []
-	for line_number, line in enumerate(sys.stdin, start=1):
+	for line_num, line in enumerate(sys.stdin, start=1):
 		m = line_pattern.match(line)
 		if not m:
-			print(f'Input line {line_number} doesn\'t match pattern!')
-			return None
+			sys.exit(f'Input line {line_num} doesn\'t match pattern!')
 		c = [m.group(1) == 'on']
 		c.extend(map(int, m.group(2,3,4,5,6,7)))
 		assert c[1] <= c[2]
@@ -41,43 +40,34 @@ def segment(ax1, ax2, bx1, bx2):
 
 	return None
 
-def intersect(a, b):
-	# If A and B intersect, break up A into smaller regions that don't intersect with B
-
-	xs = segment(a[1], a[2], b[1], b[2])
-	ys = segment(a[3], a[4], b[3], b[4])
-	zs = segment(a[5], a[6], b[5], b[6])
-
-	if not (xs and ys and zs):
-		return None # A and B don't intersect
-
-	a[0] = False # Turn off A
-
-	return [[True, x1, x2, y1, y2, z1, z2]
-		for abx, x1, x2 in xs
-		for aby, y1, y2 in ys
-		for abz, z1, z2 in zs
-			if not (abx and aby and abz)]
-
-def volume(c):
-	on, x1, x2, y1, y2, z1, z2 = c
-	return (x2 - x1 + 1) * (y2 - y1 + 1) * (z2 - z1 + 1)
-
 def solve(cuboids):
-	on_regions = []
+	regions = []
 	for c in cuboids:
-		new_on_regions = []
-		for a in on_regions:
-			if a[0] and (x := intersect(a, c)):
-				new_on_regions.extend(x)
-		on_regions.extend(new_on_regions)
-		if c[0]:
-			on_regions.append(c.copy())
-	return sum([volume(a) for a in on_regions if a[0]])
+		c_on, cx1, cx2, cy1, cy2, cz1, cz2 = c
+		new_regions = []
+		for a in regions:
+			if (a[0] and
+				(xs := segment(a[1], a[2], cx1, cx2)) and
+				(ys := segment(a[3], a[4], cy1, cy2)) and
+				(zs := segment(a[5], a[6], cz1, cz2))
+			):
+				# A and C intersect: Turn off A, and keep only subregions
+				# of A that don't intersect with C (if any).
+				a[0] = False
+				new_regions.extend([True, x1, x2, y1, y2, z1, z2]
+					for overlap_x, x1, x2 in xs
+					for overlap_y, y1, y2 in ys
+					for overlap_z, z1, z2 in zs
+						if not (overlap_x and overlap_y and overlap_z))
+		regions.extend(new_regions)
+		if c_on:
+			regions.append(c.copy())
+
+	return sum((x2 - x1 + 1) * (y2 - y1 + 1) * (z2 - z1 + 1)
+		for on, x1, x2, y1, y2, z1, z2 in regions if on)
 
 def main():
 	cuboids = read_input()
-	if not cuboids: return
 
 	init_cuboids = [c for c in cuboids
 		if  c[1] >= -50 and c[2] <= 50
