@@ -59,7 +59,7 @@ def read_input():
 	assert all_microchips == all_generators
 	assert len(floors) == max_floor + 1
 
-	return (0, tuple(floors))
+	return floors
 
 def valid(items):
 	m1, g1, m2, g2 = items
@@ -88,19 +88,19 @@ def one_combos(items, next_items):
 		x = (x,)
 		yield (m1, g1.difference(x), m2, g2.union(x))
 
-def solve(state):
+def solve(floors):
 	q = deque()
-	q.append((0, state))
+	q.append((0, 0, floors.copy()))
 	state_cache = {}
 	min_steps = None
 
 	while q:
-		steps, state = q.popleft()
+		steps, floor, floors = q.popleft()
+		state = (floor, tuple(tuple(map(len, items)) for items in floors))
 		cached_steps = state_cache.get(state)
 		if cached_steps is not None and cached_steps <= steps:
 			continue
 		state_cache[state] = steps
-		floor, floors = state
 		max_floor = len(floors) - 1
 		if not max_floor:
 			min_steps = steps
@@ -109,7 +109,6 @@ def solve(state):
 			continue
 
 		items = floors[floor]
-		floors = list(floors)
 		steps += 1
 
 		if floor < max_floor:
@@ -122,31 +121,29 @@ def solve(state):
 				floors[floor] = (mics, gens)
 				floors[next_floor] = (next_mics, next_gens)
 				if floor == 0 and not (mics or gens):
-					q.append((steps, (0, tuple(floors[1:]))))
+					q.append((steps, 0, floors[1:]))
 				else:
-					q.append((steps, (next_floor, tuple(floors))))
+					q.append((steps, next_floor, floors.copy()))
 			floors[next_floor] = next_items
 
 		if floor:
 			next_floor = floor - 1
-			combos = filter(valid, one_combos(items, floors[next_floor]))
+			next_items = floors[next_floor]
+			combos = list(filter(valid, one_combos(items, next_items)))
+			if not combos:
+				combos = filter(valid, two_combos(items, next_items))
 			for mics, gens, next_mics, next_gens in combos:
 				floors[floor] = (mics, gens)
 				floors[next_floor] = (next_mics, next_gens)
-				q.append((steps, (next_floor, tuple(floors))))
+				q.append((steps, next_floor, floors.copy()))
 	return min_steps
 
-def add_items(state, items):
-	floor, floors = state
-	mics, gens = floors[floor]
-	floors = list(floors)
-	floors[floor] = (mics.union(items), gens.union(items))
-	return (floor, tuple(floors))
-
 def main():
-	state = read_input()
-	print('Part 1:', solve(state))
-	print('Part 2:', solve(add_items(state, ('elerium', 'dilithium'))))
+	floors = read_input()
+	print('Part 1:', solve(floors))
+
+	floors[0] = tuple(items.union(('elerium', 'dilithium')) for items in floors[0])
+	print('Part 2:', solve(floors))
 
 # > python3 11.py < data/11.example
 # Part 1: 11
