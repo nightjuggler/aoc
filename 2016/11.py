@@ -58,7 +58,6 @@ def read_input():
 
 	assert all_microchips == all_generators
 	assert len(floors) == max_floor + 1
-
 	return floors
 
 def valid(items):
@@ -91,22 +90,17 @@ def one_combos(items, next_items):
 def solve(floors):
 	q = deque()
 	q.append((0, 0, floors.copy()))
-	state_cache = {}
-	min_steps = None
+	seen = set()
 
 	while q:
 		steps, floor, floors = q.popleft()
 		state = (floor, tuple(tuple(map(len, items)) for items in floors))
-		cached_steps = state_cache.get(state)
-		if cached_steps is not None and cached_steps <= steps:
+		if state in seen:
 			continue
-		state_cache[state] = steps
+		seen.add(state)
 		max_floor = len(floors) - 1
 		if not max_floor:
-			min_steps = steps
-			continue
-		if min_steps and steps >= min_steps:
-			continue
+			return steps
 
 		items = floors[floor]
 		steps += 1
@@ -136,7 +130,7 @@ def solve(floors):
 				floors[floor] = (mics, gens)
 				floors[next_floor] = (next_mics, next_gens)
 				q.append((steps, next_floor, floors.copy()))
-	return min_steps
+	return None
 
 def main():
 	floors = read_input()
