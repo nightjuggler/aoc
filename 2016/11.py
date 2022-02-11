@@ -71,6 +71,7 @@ def two_combos(items, next_items):
 	for x in m1 & g1:
 		x = (x,)
 		yield (m1.difference(x), g1.difference(x), m2.union(x), g2.union(x))
+		break
 	for x in combinations(m1, 2):
 		yield (m1.difference(x), g1, m2.union(x), g2)
 	for x in combinations(g1, 2):
@@ -94,7 +95,7 @@ def solve(floors):
 
 	while q:
 		steps, floor, floors = q.popleft()
-		state = (floor, tuple(tuple(map(len, items)) for items in floors))
+		state = (floor, tuple((len(m), len(g)) for m, g in floors))
 		if state in seen:
 			continue
 		seen.add(state)
@@ -114,10 +115,10 @@ def solve(floors):
 			for mics, gens, next_mics, next_gens in combos:
 				floors[floor] = (mics, gens)
 				floors[next_floor] = (next_mics, next_gens)
-				if floor == 0 and not (mics or gens):
-					q.append((steps, 0, floors[1:]))
-				else:
+				if floor or mics or gens:
 					q.append((steps, next_floor, floors.copy()))
+				else:
+					q.append((steps, 0, floors[1:]))
 			floors[next_floor] = next_items
 
 		if floor:
