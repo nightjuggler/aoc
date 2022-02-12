@@ -56,8 +56,8 @@ def read_input():
 				all_microchips.add(b)
 				microchips.add(b)
 			else:
-				assert b not in all_generators
 				b = get_id(b)
+				assert b not in all_generators
 				all_generators.add(b)
 				generators.add(b)
 		if microchips and generators:
