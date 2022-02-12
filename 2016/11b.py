@@ -90,21 +90,21 @@ def solve(floors):
 		for curr, m1, g1, m2, g2 in items:
 			if curr != prev and (not (m1 and g1) or m1 <= g1) and (not (m2 and g2) or m2 <= g2):
 				prev = curr
-				floors[floor] = (m1, g1)
-				floors[next_floor] = (m2, g2)
 				if floor or m1 or g1:
-					q.append((steps, next_floor, floors.copy()))
+					floors[floor] = (m1, g1)
+					floors[next_floor] = (m2, g2)
+					q.append((steps, next_floor, *floors))
 				else:
-					q.append((steps, 0, floors[1:]))
+					q.append((steps, 0, (m2, g2), *floors[2:]))
 		return prev
 
 	q = deque()
-	q.append((0, 0, floors.copy()))
+	q.append((0, 0, *floors))
 	seen = set()
 
 	while q:
-		steps, floor, floors = q.popleft()
-		state = (floor, tuple((len(m), len(g)) for m, g in floors))
+		steps, floor, *floors = q.popleft()
+		state = (floor, *((len(m)<<4) + len(g) for m, g in floors))
 		if state in seen:
 			continue
 		seen.add(state)

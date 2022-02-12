@@ -95,7 +95,7 @@ def solve(floors):
 
 	while q:
 		steps, floor, floors = q.popleft()
-		state = (floor, tuple((len(m), len(g)) for m, g in floors))
+		state = (floor, *((len(m)<<4) + len(g) for m, g in floors))
 		if state in seen:
 			continue
 		seen.add(state)
