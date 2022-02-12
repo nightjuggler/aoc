@@ -15,12 +15,12 @@ def read_input():
 	floors = []
 
 	elements = {}
-	next_id = 1
+	next_id = 0
 	def get_id(x):
 		nonlocal next_id
 		x = elements.setdefault(x, next_id)
 		if x == next_id:
-			next_id *= 2
+			next_id += 1
 		return x
 
 	floor = None
@@ -95,11 +95,25 @@ def one_combos(items, next_items):
 		x = (x,)
 		yield (m1, g1.difference(x), m2, g2.union(x))
 
-def floor_state(items):
-	m, g = items
-	if x := m & g:
-		return len(x) + (sum(m.difference(x))<<4) + (sum(g.difference(x))<<12)
-	return (sum(m)<<4) + (sum(g)<<12)
+def floor_state(floors):
+	elements = [0] * 8
+	next_id = 1
+	def remap_id(old_id):
+		nonlocal next_id
+		if not (new_id := elements[old_id]):
+			new_id = elements[old_id] = next_id
+			next_id *= 2
+		return new_id
+
+	for m, g in floors:
+		if x := m & g:
+			p = len(x)
+			m = m.difference(x)
+			g = g.difference(x)
+		else:
+			p = 0
+
+		yield p + (sum(map(remap_id, m))<<4) + (sum(map(remap_id, g))<<12)
 
 def solve(floors):
 	def process(items):
@@ -121,7 +135,7 @@ def solve(floors):
 
 	while q:
 		steps, floor, *floors = q.popleft()
-		state = (floor, *map(floor_state, floors))
+		state = (floor, *floor_state(floors))
 		if state in seen:
 			continue
 		seen.add(state)
@@ -147,10 +161,10 @@ def solve(floors):
 
 def main():
 	next_id, floors = read_input()
-	assert next_id <= 1<<6
+	assert next_id <= 6
 	print('Part 1:', solve(floors))
 
-	x = (next_id, next_id * 2)
+	x = (next_id, next_id + 1)
 	m, g = floors[0]
 	floors[0] = (m.union(x), g.union(x))
 	print('Part 2:', solve(floors))
