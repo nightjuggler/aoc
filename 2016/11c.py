@@ -76,24 +76,26 @@ def two_combos(items, next_items):
 	m2, g2 = next_items
 
 	for x in m1 & g1:
-		x = (x,)
-		yield (m1.difference(x), g1.difference(x), m2.union(x), g2.union(x))
+		x = {x}
+		yield (m1-x, g1-x, m2|x, g2|x)
 		break
 	for x in combinations(m1, 2):
-		yield (m1.difference(x), g1, m2.union(x), g2)
+		x = set(x)
+		yield (m1-x, g1, m2|x, g2)
 	for x in combinations(g1, 2):
-		yield (m1, g1.difference(x), m2, g2.union(x))
+		x = set(x)
+		yield (m1, g1-x, m2, g2|x)
 
 def one_combos(items, next_items):
 	m1, g1 = items
 	m2, g2 = next_items
 
 	for x in m1:
-		x = (x,)
-		yield (m1.difference(x), g1, m2.union(x), g2)
+		x = {x}
+		yield (m1-x, g1, m2|x, g2)
 	for x in g1:
-		x = (x,)
-		yield (m1, g1.difference(x), m2, g2.union(x))
+		x = {x}
+		yield (m1, g1-x, m2, g2|x)
 
 def floor_state(floors):
 	elements = [0] * 8
@@ -108,8 +110,8 @@ def floor_state(floors):
 	for m, g in floors:
 		if x := m & g:
 			p = len(x)
-			m = m.difference(x)
-			g = g.difference(x)
+			m -= x
+			g -= x
 		else:
 			p = 0
 
@@ -164,9 +166,9 @@ def main():
 	assert next_id <= 6
 	print('Part 1:', solve(floors))
 
-	x = (next_id, next_id + 1)
+	x = {next_id, next_id + 1}
 	m, g = floors[0]
-	floors[0] = (m.union(x), g.union(x))
+	floors[0] = (m|x, g|x)
 	print('Part 2:', solve(floors))
 
 # > python3 11.py < data/11.example
