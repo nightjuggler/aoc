@@ -99,23 +99,14 @@ def one_combos(items, next_items):
 
 def floor_state(floors):
 	elements = [0] * 8
-	next_id = 1
-	def remap_id(old_id):
-		nonlocal next_id
-		if not (new_id := elements[old_id]):
-			new_id = elements[old_id] = next_id
-			next_id *= 2
-		return new_id
-
-	for m, g in floors:
-		if x := m & g:
-			p = len(x)
-			m -= x
-			g -= x
-		else:
-			p = 0
-
-		yield p + (sum(map(remap_id, m))<<4) + (sum(map(remap_id, g))<<12)
+	for floor, (mics, gens) in enumerate(floors):
+		for e in mics:
+			elements[e] = floor
+	for mics, gens in floors:
+		count = [0] * 4
+		for e in gens:
+			count[elements[e]] += 1
+		yield sum(n << 3*i for i, n in enumerate(count) if n)
 
 def solve(floors):
 	def process(items):
