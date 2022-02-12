@@ -65,24 +65,26 @@ def two_combos(items, next_items):
 	m2, g2 = next_items
 
 	for x in m1 & g1:
-		x = (x,)
-		yield (2, m1.difference(x), g1.difference(x), m2.union(x), g2.union(x))
+		x = {x}
+		yield (2, m1-x, g1-x, m2|x, g2|x)
 		break
 	for x in combinations(m1, 2):
-		yield (4, m1.difference(x), g1, m2.union(x), g2)
+		x = set(x)
+		yield (4, m1-x, g1, m2|x, g2)
 	for x in combinations(g1, 2):
-		yield (6, m1, g1.difference(x), m2, g2.union(x))
+		x = set(x)
+		yield (6, m1, g1-x, m2, g2|x)
 
 def one_combos(items, next_items):
 	m1, g1 = items
 	m2, g2 = next_items
 
 	for x in m1:
-		x = (x,)
-		yield (1, m1.difference(x), g1, m2.union(x), g2)
+		x = {x}
+		yield (1, m1-x, g1, m2|x, g2)
 	for x in g1:
-		x = (x,)
-		yield (3, m1, g1.difference(x), m2, g2.union(x))
+		x = {x}
+		yield (3, m1, g1-x, m2, g2|x)
 
 def solve(floors):
 	def process(items):
@@ -132,7 +134,9 @@ def main():
 	floors = read_input()
 	print('Part 1:', solve(floors))
 
-	floors[0] = tuple(items.union(('elerium', 'dilithium')) for items in floors[0])
+	x = {'elerium', 'dilithium'}
+	m, g = floors[0]
+	floors[0] = (m|x, g|x)
 	print('Part 2:', solve(floors))
 
 # > python3 11.py < data/11.example
