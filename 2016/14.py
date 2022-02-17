@@ -6,10 +6,8 @@ def solve(salt, stretch):
 	candidates = {c: [] for c in '0123456789abcdef'}
 	keys = []
 	got_keys = False
-	done = False
-	i = -1
-	while not done:
-		i += 1
+	i = 0
+	while True:
 		hash = new_md5(salt + str(i).encode('ascii')).hexdigest()
 		if stretch:
 			for _ in range(2016):
@@ -40,19 +38,20 @@ def solve(salt, stretch):
 							indices[:] = [j for j in indices if i - 1000 <= j < k]
 							num_candidates += len(indices)
 						if not num_candidates:
-							done = True
+							return k
 			else:
 				prev = c
 				count = 1
-	print(keys[63])
+		i += 1
+	return None
 
 def main():
-	parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser(allow_abbrev=False)
 	parser.add_argument('salt', nargs='?', default='yjdafjpo')
 	parser.add_argument('-2', '--part2', action='store_true')
 	args = parser.parse_args()
 
-	solve(args.salt.encode('ascii'), args.part2)
+	print(solve(args.salt.encode('ascii'), args.part2))
 
 if __name__ == '__main__':
 	main()
