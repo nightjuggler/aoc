@@ -16,7 +16,10 @@ def valid_int(x): return x == str(int(x))
 def read_input():
 	code = []
 	jump_targets = set()
-	for i, line in enumerate(sys.stdin):
+	lines = list(sys.stdin)
+	num_lines = len(lines)
+
+	for i, line in enumerate(lines):
 		op, *args = line.split()
 		if op == 'cpy':
 			y, x = args
@@ -28,6 +31,9 @@ def read_input():
 			assert valid_reg(x) or valid_int(x)
 			assert valid_int(y)
 			y = i + int(y)
+			assert 0 <= y != i
+			if y >= num_lines:
+				y = num_lines
 			code.append(f'if ({x}) goto l{y};')
 			jump_targets.add(y)
 		elif op == 'inc':
@@ -40,6 +46,7 @@ def read_input():
 			code.append(f'{x} -= 1;')
 		else:
 			sys.exit(f'Unknown instruction on line {i+1}!')
+
 	return code, jump_targets
 
 def main():
@@ -56,7 +63,9 @@ int solve(int c)
 		if i in jump_targets:
 			print(f'l{i}:', end='')
 		print('\t', line, sep='')
-
+	i += 1
+	if i in jump_targets:
+		print(f'l{i}:', end='')
 	print('''
 	return a;
 }
