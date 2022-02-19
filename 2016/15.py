@@ -20,18 +20,20 @@ def gcd(a, b):
 		a, b = b, a % b
 	return a
 
-def main():
-	discs = read_input()
-
+def main(discs):
 	t = 0
 	step = 1
 
 	for pos, num_pos in discs:
+		d = gcd(num_pos, step)
+		if (pos + t) % d:
+			t = None
+			break
 		while (pos + t) % num_pos:
 			t += step
-		step *= num_pos // gcd(num_pos, step)
+		step *= num_pos // d
 
 	print(t)
 
 if __name__ == '__main__':
-	main()
+	main(read_input())
