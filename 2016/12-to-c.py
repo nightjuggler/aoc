@@ -32,7 +32,7 @@ def read_input():
 			assert valid_int(y)
 			y = i + int(y)
 			assert 0 <= y != i
-			if y >= num_lines:
+			if y > num_lines:
 				y = num_lines
 			code.append(f'if ({x}) goto l{y};')
 			jump_targets.add(y)
