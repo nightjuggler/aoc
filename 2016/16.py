@@ -1,3 +1,5 @@
+from array import array
+
 def solve_v1(n, a):
 	assert n > 0 and n % 2 == 0
 	assert a.strip('01') == ''
@@ -20,7 +22,7 @@ def solve_v2(n, a):
 	assert a.strip('01') == ''
 
 	pn = len(a)
-	a = [c == '1' for c in a]
+	a = array('B', [c == '1' for c in a])
 	a.append(False)
 	a.extend(not c for c in a[-2::-1])
 
