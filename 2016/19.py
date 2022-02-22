@@ -15,18 +15,15 @@ def part2(n):
 	next_elf[n] = 1
 
 	i = 1
-	j = i
-	j_ahead = 0
+	j = 1 + n//2
+	prev_j = n//2
 
-	while n > 1:
-		for _ in range(j_ahead, n//2):
-			prev_j = j
-			j = next_elf[j]
+	for n in range(n, 1, -1):
 		j = next_elf[prev_j] = next_elf[j]
 		i = next_elf[i]
-		j_ahead = n//2 - 1
-		n -= 1
-
+		if n % 2:
+			prev_j = j
+			j = next_elf[j]
 	return i
 
 # Recursive solution for part 1,
@@ -70,7 +67,7 @@ def main():
 	args = parser.parse_args()
 
 	if args.elves <= 0:
-		sys.exit('The number of elves must be greater than 0!')
+		raise SystemExit('The number of elves must be greater than 0!')
 
 	solve = part2 if args.part2 else part1
 
