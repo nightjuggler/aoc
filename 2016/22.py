@@ -2,21 +2,24 @@ from operator import itemgetter
 import re
 import sys
 
-def sanity_check(node, nodes):
-	x, y, size, used, avail, percent_used = node
+def sanity_check(nodes):
+	if not nodes: return
 
-	assert size == used + avail
-	assert int(100 * used / size) == percent_used
+	prev_x, max_y = nodes[-1][:2]
+	prev_y = max_y + 1
 
-	if nodes:
-		prev_x, prev_y = nodes[-1][:2]
+	for x, y, size, used, avail, percent_used in nodes[::-1]:
+		assert size == used + avail
+		assert int(100 * used / size) == percent_used
+
 		if x == prev_x:
-			assert y == prev_y + 1
+			assert y == prev_y - 1
 		else:
-			assert x == prev_x + 1 and y == 0
-			assert len(nodes) == x * (prev_y + 1)
-	else:
-		assert x == 0 == y
+			assert x == prev_x - 1 and prev_y == 0 and y == max_y
+		prev_x = x
+		prev_y = y
+
+	assert prev_x == 0 == prev_y
 
 def read_input(f):
 	n = '([1-9][0-9]*|0)'
@@ -25,9 +28,7 @@ def read_input(f):
 	nodes = []
 	for line_num, line in enumerate(f, start=1):
 		if m := pattern.match(line):
-			node = tuple(map(int, m.groups()))
-			sanity_check(node, nodes)
-			nodes.append(node)
+			nodes.append(tuple(map(int, m.groups())))
 		elif nodes or line_num > 2:
 			sys.exit(f"Input line {line_num} doesn't match pattern!")
 	return nodes
@@ -67,6 +68,7 @@ def part1(nodes):
 
 def main():
 	nodes = read_input(sys.stdin)
+	sanity_check(nodes)
 
 	print(part1(nodes))
 
