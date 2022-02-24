@@ -2,6 +2,22 @@ from operator import itemgetter
 import re
 import sys
 
+def sanity_check(node, nodes):
+	x, y, size, used, avail, percent_used = node
+
+	assert size == used + avail
+	assert int(100 * used / size) == percent_used
+
+	if nodes:
+		prev_x, prev_y = nodes[-1][:2]
+		if x == prev_x:
+			assert y == prev_y + 1
+		else:
+			assert x == prev_x + 1 and y == 0
+			assert len(nodes) == x * (prev_y + 1)
+	else:
+		assert x == 0 == y
+
 def read_input(f):
 	n = '([1-9][0-9]*|0)'
 	pattern = re.compile(f'^/dev/grid/node-x{n}-y{n} +{n}T +{n}T +{n}T +{n}%$')
@@ -10,9 +26,7 @@ def read_input(f):
 	for line_num, line in enumerate(f, start=1):
 		if m := pattern.match(line):
 			node = tuple(map(int, m.groups()))
-			x, y, size, used, avail, percent_used = node
-			assert size == used + avail
-			assert int(100 * used / size) == percent_used
+			sanity_check(node, nodes)
 			nodes.append(node)
 		elif nodes or line_num > 2:
 			sys.exit(f"Input line {line_num} doesn't match pattern!")
