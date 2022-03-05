@@ -1,3 +1,4 @@
+from collections import deque
 from operator import itemgetter
 import re
 import sys
@@ -66,11 +67,91 @@ def part1(nodes):
 
 	return num_viable
 
+def part2(nodes):
+	if not nodes:
+		return None
+
+	get_used = itemgetter(3)
+	get_avail = itemgetter(4)
+
+	x, y = nodes[-1][:2]
+	size_x = x + 1
+	size_y = y + 1
+
+	data_xy = (x, 0)
+	from_xy = []
+	to_xy = set()
+
+	for i, used in enumerate(map(get_used, nodes)):
+		if not used: continue
+		px, py = divmod(i, size_y)
+		for x, y in ((px+1, py), (px, py+1), (px-1, py), (px, py-1)):
+			if not (0 <= x < size_x): continue
+			if not (0 <= y < size_y): continue
+			if used <= get_avail(nodes[x*size_y+y]):
+				from_xy.append((px, py))
+				to_xy.add((x, y))
+
+	assert len(to_xy) == 1
+	x, y = to_xy = to_xy.pop()
+	size, used = nodes[x*size_y+y][2:4]
+	assert used == 0
+
+	fits = {to_xy}
+	sizes = [size]
+	useds = []
+	q = deque()
+	q.append((x, y, size))
+
+	while q:
+		px, py, psize = q.popleft()
+		for xy in ((px+1, py), (px, py+1), (px-1, py), (px, py-1)):
+			x, y = xy
+			if not (0 <= x < size_x): continue
+			if not (0 <= y < size_y): continue
+			if xy in fits: continue
+			size, used = nodes[x*size_y+y][2:4]
+			if used <= psize:
+				fits.add(xy)
+				sizes.append(size)
+				useds.append(used)
+				q.append((x, y, size))
+
+	sizes.sort()
+	min_size = sizes[0]
+	max_size = sizes[-1]
+	useds.sort()
+	min_used = useds[0]
+	max_used = useds[-1]
+
+	assert min_size > max_used
+	assert max_size < min_used*2
+
+	seen = {(to_xy, data_xy)}
+	for xy in from_xy:
+		q.append((1, xy, to_xy, data_xy))
+	while q:
+		steps, from_xy, to_xy, data_xy = q.popleft()
+		if from_xy == data_xy:
+			if to_xy == (0, 0): return steps
+			data_xy = to_xy
+		state = (from_xy, data_xy)
+		if state in seen: continue
+		seen.add(state)
+
+		x, y = from_xy
+		steps += 1
+		for xy in ((x+1, y), (x, y+1), (x-1, y), (x, y-1)):
+			if xy != to_xy and xy in fits:
+				q.append((steps, xy, from_xy, data_xy))
+	return None
+
 def main():
 	nodes = read_input(sys.stdin)
 	sanity_check(nodes)
 
-	print(part1(nodes))
+	print('Part 1:', part1(nodes))
+	print('Part 2:', part2(nodes))
 
 if __name__ == '__main__':
 	main()
