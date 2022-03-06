@@ -71,7 +71,8 @@ def part2(nodes):
 	if not nodes:
 		return None
 
-	get_used = itemgetter(3)
+	get_xy_used = itemgetter(0, 1, 3)
+	get_size_used = itemgetter(2, 3)
 	get_avail = itemgetter(4)
 
 	x, y = nodes[-1][:2]
@@ -79,22 +80,19 @@ def part2(nodes):
 	size_y = y + 1
 
 	data_xy = (x, 0)
-	from_xy = []
 	to_xy = set()
 
-	for i, used in enumerate(map(get_used, nodes)):
+	for px, py, used in map(get_xy_used, nodes):
 		if not used: continue
-		px, py = divmod(i, size_y)
 		for x, y in ((px+1, py), (px, py+1), (px-1, py), (px, py-1)):
 			if not (0 <= x < size_x): continue
 			if not (0 <= y < size_y): continue
 			if used <= get_avail(nodes[x*size_y+y]):
-				from_xy.append((px, py))
 				to_xy.add((x, y))
 
 	assert len(to_xy) == 1
 	x, y = to_xy = to_xy.pop()
-	size, used = nodes[x*size_y+y][2:4]
+	size, used = get_size_used(nodes[x*size_y+y])
 	assert used == 0
 
 	fits = {to_xy}
@@ -110,7 +108,7 @@ def part2(nodes):
 			if not (0 <= x < size_x): continue
 			if not (0 <= y < size_y): continue
 			if xy in fits: continue
-			size, used = nodes[x*size_y+y][2:4]
+			size, used = get_size_used(nodes[x*size_y+y])
 			if used <= psize:
 				fits.add(xy)
 				sizes.append(size)
@@ -128,22 +126,20 @@ def part2(nodes):
 	assert max_size < min_used*2
 
 	seen = {(to_xy, data_xy)}
-	for xy in from_xy:
-		q.append((1, xy, to_xy, data_xy))
-	while q:
-		steps, from_xy, to_xy, data_xy = q.popleft()
-		if from_xy == data_xy:
-			if to_xy == (0, 0): return steps
-			data_xy = to_xy
-		state = (from_xy, data_xy)
-		if state in seen: continue
-		seen.add(state)
+	q.append((0, to_xy, data_xy))
 
-		x, y = from_xy
+	while q:
+		steps, to_xy, data_xy = q.popleft()
+		if data_xy == (0, 0):
+			return steps
 		steps += 1
+		x, y = to_xy
 		for xy in ((x+1, y), (x, y+1), (x-1, y), (x, y-1)):
-			if xy != to_xy and xy in fits:
-				q.append((steps, xy, from_xy, data_xy))
+			if xy in fits:
+				state = (xy, to_xy if xy == data_xy else data_xy)
+				if state not in seen:
+					seen.add(state)
+					q.append((steps, *state))
 	return None
 
 def main():
