@@ -122,7 +122,7 @@ def part2(nodes):
 	min_used = useds[0]
 	max_used = useds[-1]
 
-	assert min_size > max_used
+	assert min_size >= max_used
 	assert max_size < min_used*2
 
 	seen = {(to_xy, data_xy)}
