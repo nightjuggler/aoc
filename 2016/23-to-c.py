@@ -42,9 +42,10 @@ def read_input():
 			code.append(f'if (t[{i}]) {x} += 1; else {x} -= 1;')
 		elif op == 'tgl':
 			x, = args
-			j, e = ((f'{i} + {x}', f' else if (t[{i}]) {x} -= 1; else {x} += 1;')
+			j, e = ((f'{i} + {x}', f'\n\t\t\telse if (t[{i}]) {x} -= 1; else {x} += 1;')
 				if valid_reg(x) else (i + int(x), ''))
-			code.append(f'if (t[{i}] == 2) {{ if ({j} < {num_lines}) t[{j}] = !t[{j}]; }}{e}')
+			code.append(f'if (t[{i}] == 2) '
+				f'{{ int j = {j}; if (j >= 0 && j < {num_lines}) t[j] = !t[j]; }}{e}')
 			toggles.append(i)
 		else:
 			sys.exit(f'Unknown instruction on line {i+1}!')
