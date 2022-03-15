@@ -1,4 +1,5 @@
 from collections import deque
+import operator
 import re
 import sys
 
@@ -31,8 +32,9 @@ def read_input():
 	return scanners
 
 def multiply_matrices(m1, m2):
+	mul = operator.mul
 	m2 = list(zip(*m2))
-	return tuple([tuple([sum([e1 * e2 for e1, e2 in zip(row, col)]) for col in m2]) for row in m1])
+	return tuple(tuple(sum(map(mul, row, col)) for col in m2) for row in m1)
 
 def get_rotations():
 	# cos(t), sin(t) for t in 0, 90, 180, and 270 degrees
@@ -49,7 +51,8 @@ def get_rotations():
 	return rotations
 
 def rotate_point(m, p):
-	return tuple([sum([me * pe for me, pe in zip(row, p)]) for row in m])
+	mul = operator.mul
+	return tuple(sum(map(mul, row, p)) for row in m)
 
 def preprocess_scanners(scanners):
 	for i, beacons in enumerate(scanners):
@@ -69,7 +72,7 @@ def find_overlap(rotations, scanners, s1, s2):
 	beacons2 = scanners[s2]
 	for rot in rotations:
 		for b2, b2_set in beacons2:
-			rotated_set = set([rotate_point(rot, p) for p in b2_set])
+			rotated_set = set(rotate_point(rot, p) for p in b2_set)
 			for b1, b1_set in beacons1:
 				x_set = b1_set & rotated_set
 				if len(x_set) >= 11:
@@ -131,7 +134,7 @@ def main():
 				overlap = find_overlap(rotations, scanners, j, i)
 				overlap_map[i].append((j, overlap))
 
-	beacon_positions = set([b for b, b_set in scanners[0]])
+	beacon_positions = set(b for b, b_set in scanners[0])
 	scanner_positions = [(0, 0, 0)]
 
 	for i in range(1, num_scanners):
