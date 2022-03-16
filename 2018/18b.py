@@ -2,38 +2,27 @@ import re
 import sys
 
 def read_input():
-	valid_chars = [ord(c) for c in '.|#']
-	line_number = 0
-	line_length = 0
+	line_len = 0
 	grid = []
 
-	for line in sys.stdin:
-		line_number += 1
-		row = [ord(c) for c in line.rstrip()]
-		for c in row:
-			if c not in valid_chars:
-				print(f'Input line {line_number}: Unexpected character!')
-				return None
-		if line_length:
-			if len(row) != line_length:
-				print(f'Input line {line_number}: Unexpected length!')
-				return None
-		else:
-			line_length = len(row)
-			if line_length == 0:
-				print(f'Input line {line_number} is empty!')
-				return None
-		row.insert(0, 0)
-		row.append(0)
-		grid.append(row)
+	for line_num, line in enumerate(sys.stdin, start=1):
+		line = line.rstrip()
+		if line.strip('.|#'):
+			sys.exit(f'Input line {line_num}: Unexpected character(s)!')
+		if line_len:
+			if len(line) != line_len:
+				sys.exit(f'Input line {line_num}: Unexpected length!')
+		elif not (line_len := len(line)):
+			sys.exit(f'Input line {line_num} is empty!')
+		grid.append([0, *map(ord, line), 0])
 
-	empty_line = [0] * (line_length + 2)
+	empty_line = [0] * (line_len + 2)
 	grid.insert(0, empty_line)
 	grid.append(empty_line)
 	return grid
 
 def play(grid):
-	open_ground, trees, lumberyard = [ord(c) for c in '.|#']
+	open_ground, trees, lumberyard = map(ord, '.|#')
 
 	grid_len = len(grid) - 1
 	line_len = len(grid[0]) - 1
@@ -71,7 +60,6 @@ def print_grid(grid):
 
 def main():
 	grid = read_input()
-
 	cache = []
 	cache_size = 30
 	num_minutes = 1_000_000_000
@@ -91,8 +79,8 @@ def main():
 	wooded, num_wooded = ord('|'), 0
 	lumber, num_lumber = ord('#'), 0
 
-	for row in grid[1:-1]:
-		for c in row[1:-1]:
+	for row in grid:
+		for c in row:
 			if c == wooded: num_wooded += 1
 			elif c == lumber: num_lumber += 1
 
