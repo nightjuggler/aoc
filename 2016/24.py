@@ -8,14 +8,14 @@ def read_input():
 	for y, line in enumerate(sys.stdin):
 		for x, c in enumerate(line.rstrip()):
 			if c == '#': continue
-			locations[(x, y)] = 0
+			locations[x, y] = 0
 			if c == '.': continue
 			n = ord(c) - ord('0')
-			if not (0 <= n <= 9):
-				sys.exit(f'Unexpected character at {(x, y)}!')
+			if not 0 <= n <= 9:
+				sys.exit(f'Unexpected character at {x, y}!')
 			if n in numbers:
-				sys.exit(f'Duplicate occurrence of {n} at {numbers[n]} and {(x, y)}!')
-			numbers[n] = (x, y)
+				sys.exit(f'Duplicate occurrence of {n} at {numbers[n]} and {x, y}!')
+			numbers[n] = x, y
 
 	if not (numbers and len(numbers) == max(numbers) + 1):
 		sys.exit('Please specify continuous integers starting with 0!')
@@ -23,7 +23,7 @@ def read_input():
 	start_xy = numbers.pop(0)
 
 	for n, xy in numbers.items():
-		locations[xy] = 1 << (n - 1)
+		locations[xy] = 1 << n-1
 
 	return start_xy, locations, (1 << len(numbers)) - 1
 
