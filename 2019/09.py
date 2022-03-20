@@ -21,7 +21,7 @@ def run(program, inputs):
 			modes.extend([0] * (n - mlen))
 		else:
 			assert mlen == n
-		for j, mode in zip(range(1, n+1), modes):
+		for j, mode in enumerate(modes, start=1):
 			arg = program.get(i+j, 0)
 			if mode != 1:
 				if mode == 2:
