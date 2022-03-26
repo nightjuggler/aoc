@@ -87,9 +87,8 @@ def play(program, stdscr):
 	grid = {}
 	num_blocks = 0
 
-	curses.curs_set(0)
+	curses.curs_set(0) # Set cursor visibility to 0 (invisible)
 	stdscr.clear()
-	stdscr.timeout(0) # non-blocking read
 
 	for x, y, tile in program:
 		if x < 0:
@@ -119,18 +118,33 @@ def play(program, stdscr):
 	max_x += 1
 	max_y += 1
 	assert len(grid) == max_x * max_y
+
 	score = 0
-	stdscr.addstr(max_y, 0, 'Score: 0')
 	blocks = num_blocks
 	blocks_str = f'{blocks:,} Blocks'
 	blocks_x = max_x - len(blocks_str)
 	blocks_spec = str(max_x - blocks_x - 7) + ','
+
+	stdscr.addstr(max_y, 0, 'Score: 0')
 	stdscr.addstr(max_y, blocks_x, blocks_str)
 	stdscr.refresh()
+
 	send_value = None
 	autoplay = True
-	delay = 1
-	quit = False
+	autoball = False
+	delay = 0
+
+	def inc_delay(delta):
+		nonlocal delay
+		delay += delta / 100
+		if delta < 0:
+			delay = max(0.01, delay)
+		else:
+			delay = min(1.00, delay)
+		stdscr.addstr(max_y, 14, f'| {delay:4.2f}s')
+
+	inc_delay(1)
+	stdscr.timeout((autoplay or autoball) - 1) # non-blocking (0) or blocking (-1) read
 
 	while True:
 		try:
@@ -143,7 +157,7 @@ def play(program, stdscr):
 			if x < 0:
 				assert y == 0 <= tile
 				score = tile
-				stdscr.addstr(max_y, 0, f'Score: {score:<6,}')
+				stdscr.addstr(max_y, 7, format(score, '<6,'))
 				stdscr.refresh()
 				continue
 
@@ -163,33 +177,37 @@ def play(program, stdscr):
 				paddle_x = x
 				assert y == paddle_y
 			else:
-				sys.exit("Unexpected tile ({' |#=o'[tile]}) during play!")
+				sys.exit(f'Unexpected tile ({tile}) during play!')
 		else:
+			send_value = 0
 			stdscr.refresh()
-			if (c := stdscr.getch()) > 0:
-				c = chr(c)
-				if c == 'q':
-					quit = True
-					break
-				elif c == ',': delay = min(100, delay+1)
-				elif c == '.': delay = max(1, delay-1)
-				elif c == '[': delay = min(100, delay+10)
-				elif c == ']': delay = max(1, delay-10)
+			if autoplay or autoball:
+				time.sleep(delay)
+			while (c := stdscr.getch()) >= 0:
+				if (c := chr(c)) == 'q':
+					return num_blocks, score
+				if not autoplay and c in 'jkl':
+					send_value = ord(c) - ord('k')
+					if not autoball: break
+				elif c == ',': inc_delay(1)
+				elif c == '.': inc_delay(-1)
+				elif c == '[': inc_delay(10)
+				elif c == ']': inc_delay(-10)
 				elif c == 'm':
+					autoball = False
 					autoplay = not autoplay
-					stdscr.timeout(0 if autoplay else -1)
+					stdscr.timeout(autoplay - 1)
+				elif c == 'b':
+					autoplay = False
+					autoball = not autoball
+					stdscr.timeout(autoball - 1)
 			if autoplay:
-				time.sleep(delay / 100)
 				send_value = ball_x + ball_dx * (paddle_y - 1 - ball_y) - paddle_x
 				if send_value:
 					send_value //= abs(send_value)
-			else:
-				while c not in 'jkl': c = stdscr.getkey()
-				send_value = ord(c) - ord('k')
 
 	stdscr.timeout(-1) # blocking read
-	if not quit:
-		while stdscr.getkey() != 'q': pass
+	while stdscr.getkey() != 'q': pass
 
 	return num_blocks, score
 
