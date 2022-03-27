@@ -49,15 +49,14 @@ def main():
 
 	ore_left = 1_000_000_000_000
 	total_fuel = 0
-	while True:
-		fuel = ore_left // ore_per_fuel
-		if not fuel:
-			while (ore := solve(1, 'FUEL')) <= ore_left:
-				ore_left -= ore
-				total_fuel += 1
-			break
+
+	while fuel := ore_left // ore_per_fuel:
 		ore_left -= solve(fuel, 'FUEL')
 		total_fuel += fuel
+
+	while (ore := solve(1, 'FUEL')) <= ore_left:
+		ore_left -= ore
+		total_fuel += 1
 
 	print('Part 2:', total_fuel)
 
