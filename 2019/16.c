@@ -29,6 +29,8 @@
 #define SKIPLEN 7
 #endif
 
+#define BUFSIZE MAXLEN+2 < MAXLEN*REPEAT ? MAXLEN*REPEAT : MAXLEN+2
+
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
@@ -69,8 +71,8 @@ void fft(uchar *in, uchar *out, const uint len, const uint skip)
 
 int main(int argc, char **argv)
 {
-	static uchar buf1[MAXLEN*REPEAT];
-	static uchar buf2[MAXLEN*REPEAT];
+	static uchar buf1[BUFSIZE];
+	static uchar buf2[BUFSIZE];
 	uchar *tmp;
 	uchar *in = buf1;
 	uchar *out = buf2;
@@ -88,7 +90,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Input too long!\n");
 		return 1;
 	}
-	if (len < MSGLEN || len < SKIPLEN) {
+	if (len < SKIPLEN) {
 		fprintf(stderr, "Input too short!\n");
 		return 1;
 	}
