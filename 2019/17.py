@@ -92,11 +92,8 @@ def get_moves(robot, facing, scaffold, intersections):
 		visits = scaffold[robot]
 		scaffold[robot] = visits + 1
 		adjacent = (x, y-1), (x+1, y), (x, y+1), (x-1, y)
-		if robot in intersections:
-			assert visits <= 1
-			steps += 1
-		elif adjacent[facing] in scaffold:
-			assert visits == 0
+		if adjacent[facing] in scaffold:
+			assert visits == 0 or robot in intersections and visits == 1
 			steps += 1
 		else:
 			assert visits == 0
@@ -145,8 +142,8 @@ def part2(program, robot_and_scaffold):
 
 	chunks = chunkify(moves, 20, 3)
 	assert chunks
-	for i, chunk in enumerate(chunks):
-		moves = moves.replace(chunk, chr(ord('A') + i))
+	for chunk, letter in zip(chunks, 'ABC'):
+		moves = moves.replace(chunk, letter)
 	if len(chunks) < 3:
 		chunks.extend([''] * (3 - len(chunks)))
 
