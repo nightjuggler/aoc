@@ -86,9 +86,9 @@ def get_moves(robot, facing, scaffold, intersections):
 		assert scaffold_left
 		moves.append('L')
 		facing = (facing + 3) % 4
-	x, y = robot = adjacent[facing]
 	steps = 1
 	while True:
+		x, y = robot = adjacent[facing]
 		visits = scaffold[robot]
 		scaffold[robot] = visits + 1
 		adjacent = (x, y-1), (x+1, y), (x, y+1), (x-1, y)
@@ -112,9 +112,8 @@ def get_moves(robot, facing, scaffold, intersections):
 			else:
 				break
 			steps = 1
-		x, y = robot = adjacent[facing]
 	for xy, visits in scaffold.items():
-		assert visits == 2 if xy in intersections else 1
+		assert visits == (2 if xy in intersections else 1)
 	return ','.join(moves)
 
 def chunkify(moves, max_chunk_len, max_num_chunks):
@@ -124,7 +123,7 @@ def chunkify(moves, max_chunk_len, max_num_chunks):
 		s = parts[0]
 		if (i := len(s)) > max_chunk_len:
 			i = s.rfind(',', 0, max_chunk_len+1)
-		while i >= 0:
+		while i > 0:
 			s = s[:i]
 			chunks.append(s)
 			s_with_commas = ',' + s + ','
@@ -178,7 +177,7 @@ def part1(program):
 				scaffold[x, y] = 0
 			elif c != '.':
 				assert robot is None
-				robot = (x, y)
+				robot = x, y
 				facing = '^>v<'.index(c)
 	intersections = set()
 	for x, y in scaffold:
