@@ -2,14 +2,12 @@ import sys
 
 def main(stream):
 	stream = iter(stream)
-	score = garbage = 0
-	groups = [0]
+	group = score = garbage = 0
 	p = None
 	for c in stream:
 		if c == '{':
 			assert p == '{' or p == ',' or p is None
-			group = groups[-1] + 1
-			groups.append(group)
+			group += 1
 			score += group
 		elif c == '<':
 			assert p == '{' or p == ','
@@ -19,14 +17,14 @@ def main(stream):
 				else:
 					garbage += 1
 		elif c == ',':
-			assert p == '}' or p == '>'
+			assert (p == '}' and group) or p == '>'
 		elif c == '}':
-			assert p == '}' or p == '>' or p == '{'
-			groups.pop()
+			assert (p == '}' and group) or p == '>' or p == '{'
+			group -= 1
 		else:
 			sys.exit('Unexpected character!')
 		p = c
-	assert groups == [0]
+	assert p == '}' and not group
 	print('Part 1:', score)
 	print('Part 2:', garbage)
 
