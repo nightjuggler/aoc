@@ -1,14 +1,5 @@
 import sys
 
-def get_distance(x, y):
-	if x < 0 and y > 0:
-		d = min(-x, y)
-		return d + abs(x + d) + abs(y - d)
-	if x > 0 and y < 0:
-		d = min(x, -y)
-		return d + abs(x - d) + abs(y + d)
-	return abs(x) + abs(y)
-
 def main(path):
 	x = y = 0
 	distance = furthest = 0
@@ -26,7 +17,9 @@ def main(path):
 			y += 1
 		else:
 			sys.exit('Unexpected direction!')
-		distance = get_distance(x, y)
+		distance = abs(x) + abs(y)
+		if x*y < 0:
+			distance -= min(abs(x), abs(y))
 		if distance > furthest:
 			furthest = distance
 
