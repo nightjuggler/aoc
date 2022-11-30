@@ -1,4 +1,3 @@
-from collections import deque
 import re
 import sys
 
@@ -23,37 +22,28 @@ def read_input():
 				sys.exit(f'{p1} connects to {p}, but {p} doesn\'t connect to {p1}!')
 	return programs
 
-def group_size(p, programs):
-	group = set()
-	q = deque()
-	q.append(p)
-	while q:
-		p = q.popleft()
-		if p not in group:
-			group.add(p)
-			q.extend(programs[p])
-	return len(group)
+def remove_group(programs, p):
+	todo = {p}
+	size = 0
+	while todo:
+		if (p := todo.pop()) in programs:
+			size += 1
+			todo.update(programs.pop(p))
+	return size
 
 def count_groups(programs):
-	q = deque()
-	done = set()
 	num_groups = 0
-	for p in programs:
-		if p in done: continue
-		group = set()
-		q.append(p)
-		while q:
-			p = q.popleft()
-			if p not in group:
-				group.add(p)
-				q.extend(programs[p])
-		done.update(group)
+	while programs:
 		num_groups += 1
+		p, todo = programs.popitem()
+		while todo:
+			if (p := todo.pop()) in programs:
+				todo.update(programs.pop(p))
 	return num_groups
 
 def main():
 	programs = read_input()
-	print('Part 1:', group_size(0, programs))
-	print('Part 2:', count_groups(programs))
+	print('Part 1:', remove_group(programs, 0))
+	print('Part 2:', count_groups(programs) + 1)
 
 main()
