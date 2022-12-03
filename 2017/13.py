@@ -16,20 +16,15 @@ def gcd(a, b):
 
 def get_delay_step(scanners):
 	start, step = 0, 1
-	for s, (r, d) in enumerate(scanners[::-1], start=1):
-		others = [(r2, d2) for r2, d2 in scanners[:-s] if not r % r2]
-		v = None
-		for i in range(r):
-			for r2, d2 in others:
-				if i % r2 in d2: break
-			else:
-				if i not in d:
-					if v is not None: break
-					v = i
-		else:
-			if v is not None:
-				while start % r != v: start += step
-				step *= r // gcd(r, step)
+	for si, (sr, sd) in enumerate(scanners[::-1], start=1):
+		s = set(range(sr))
+		s.difference_update(sd, *(range(e, sr, r) for r, d in scanners[:-si] if not sr % r for e in d))
+		if not s:
+			sys.exit('No solution!')
+		e = s.pop()
+		if not s:
+			while start % sr != e: start += step
+			step *= sr // gcd(sr, step)
 	return start, step
 
 def part1(scanners):
