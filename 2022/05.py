@@ -21,12 +21,10 @@ def read_stacks(f):
 	stacks = []
 	for line_num, line in enumerate(f, start=1):
 		line = line.rstrip('\r\n')
-		if not (m := pattern.match(line)): break
-		if not stacks:
-			stacks.extend(c if c != ' ' else '' for c in line[1::4])
-		else:
-			for i, c in enumerate(line[1::4]):
-				if c != ' ': stacks[i] = c + stacks[i]
+		if not pattern.match(line): break
+		if not stacks: stacks = [''] * len(line[1::4])
+		for i, c in enumerate(line[1::4]):
+			if c != ' ': stacks[i] = c + stacks[i]
 	else:
 		sys.exit('Unexpected end of input file!')
 
