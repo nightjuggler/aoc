@@ -1,11 +1,11 @@
 import sys
 def main():
 	rows = [list(map(int, line.strip())) for line in sys.stdin]
+	cols = list(zip(*rows))
 	num_visible = 0
 	max_score = 0
 	for y, row in enumerate(rows):
-		for x, tree in enumerate(row):
-			col = [_row[x] for _row in rows]
+		for x, (tree, col) in enumerate(zip(row, cols)):
 			is_visible = False
 			score = 1
 			for trees in (row[x::-1], row[x:], col[y::-1], col[y:]):
