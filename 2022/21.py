@@ -24,57 +24,36 @@ def get_num(monkeys, name):
 	name1, op, name2 = args
 	return op(get_num(monkeys, name1), get_num(monkeys, name2))
 
-def uses_humn(monkeys, name):
-	if name == 'humn': return True
-	args = monkeys[name]
-	if isinstance(args, int): return False
-	name1, op, name2 = args
-	return uses_humn(monkeys, name1) or uses_humn(monkeys, name2)
+def get_rev(monkeys, name, rev_name):
+	rev_monkeys = {name: 0}
+	monkeys[name][1] = operator.sub
 
-def make_rev(monkeys, rev_monkeys, name):
-	if name == 'humn': return
-	name1, op, name2 = monkeys[name]
-	name1_uses_humn = uses_humn(monkeys, name1)
-	name2_uses_humn = uses_humn(monkeys, name2)
-	if name1_uses_humn:
-		assert not name2_uses_humn
-	else:
-		assert name2_uses_humn
-		name1, name2 = name2, name1
-	if op is operator.add:
-		rev_monkeys[name1] = [name, operator.sub, name2]
-	elif op is operator.sub:
-		if name1_uses_humn:
-			rev_monkeys[name1] = [name, operator.add, name2]
-		else:
-			rev_monkeys[name1] = [name2, operator.sub, name]
-	elif op is operator.mul:
-		rev_monkeys[name1] = [name, operator.floordiv, name2]
-	else:
-		assert op is operator.floordiv
-		if name1_uses_humn:
-			rev_monkeys[name1] = [name, operator.mul, name2]
-		else:
-			rev_monkeys[name1] = [name2, operator.floordiv, name]
-	rev_monkeys[name2] = get_num(monkeys, name2)
-	make_rev(monkeys, rev_monkeys, name1)
+	def follow(name):
+		if name == rev_name: return True
+		args = monkeys[name]
+		if isinstance(args, int): return False
+		name1, op, name2 = args
+		return follow(name1) or follow(name2)
 
-def part2(monkeys):
-	rev_monkeys = {}
-	name1, op, name2 = monkeys['root']
-	name1_uses_humn = uses_humn(monkeys, name1)
-	name2_uses_humn = uses_humn(monkeys, name2)
-	if name1_uses_humn:
-		assert not name2_uses_humn
-	else:
-		assert name2_uses_humn
-		name1, name2 = name2, name1
-	rev_monkeys[name1] = get_num(monkeys, name2)
-	make_rev(monkeys, rev_monkeys, name1)
-	return get_num(rev_monkeys, 'humn')
+	def invert():
+		if op is operator.add: return [name, operator.sub, name2]
+		if op is operator.sub: return [name2, operator.add if follow1 else op, name]
+		if op is operator.mul: return [name, operator.floordiv, name2]
+		return [name2, operator.mul if follow1 else op, name]
+
+	while name != rev_name:
+		name1, op, name2 = monkeys[name]
+		follow1 = follow(name1)
+		assert follow1 is not follow(name2)
+		if not follow1: name1, name2 = name2, name1
+		rev_monkeys[name1] = invert()
+		rev_monkeys[name2] = get_num(monkeys, name2)
+		name = name1
+
+	return get_num(rev_monkeys, name)
 
 def main():
 	monkeys = read_input()
 	print('Part 1:', get_num(monkeys, 'root'))
-	print('Part 2:', part2(monkeys))
+	print('Part 2:', get_rev(monkeys, 'root', 'humn'))
 main()
