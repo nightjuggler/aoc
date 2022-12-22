@@ -72,92 +72,108 @@ def move2(tiles, path, x, y, wrap):
 			x, y, facing = pos
 	return 1000*(y+1) + 4*(x+1) + facing
 
+def fold1(size):
+	#
+	#   A      x
+	# BCD    xxx
+	#   EF     xx
+	#
+	wrap = {}
+	for i in range(size):
+		# A & C
+		wrap[size+i, size-1, 3] = 2*size, i, 0 # top of C -> left of A
+		wrap[2*size-1, i, 2] = size+i, size, 1 # left of A -> top of C
+
+		# C & E
+		wrap[size+i, 2*size, 1] = 2*size, 3*size-1-i, 0     # bottom of C -> left of E
+		wrap[2*size-1, 3*size-1-i, 2] = size+i, 2*size-1, 3 # left of E -> bottom of C
+
+		# A & F
+		wrap[3*size, i, 0] = 4*size-1, 3*size-1-i, 2 # right of A -> right of F
+		wrap[4*size, 3*size-1-i, 0] = 3*size-1, i, 2 # right of F -> right of A
+
+		# D & F
+		wrap[3*size, size+i, 0] = 4*size-1-i, 2*size, 1     # right of D -> top of F
+		wrap[4*size-1-i, 2*size-1, 3] = 3*size-1, size+i, 2 # top of F -> right of D
+
+		# A & B
+		wrap[i, size-1, 3] = 3*size-1-i, 0, 1 # top of B -> top of A
+		wrap[3*size-1-i, -1, 3] = i, size, 1  # top of A -> top of B
+
+		# B & E
+		wrap[i, 2*size, 1] = 3*size-1-i, 3*size-1, 3 # bottom of B -> bottom of E
+		wrap[3*size-1-i, 3*size, 1] = i, 2*size-1, 3 # bottom of E -> bottom of B
+
+		# B & F
+		wrap[-1, size+i, 2] = 4*size-1-i, 3*size-1, 3 # left of B -> bottom of F
+		wrap[4*size-1-i, 3*size, 1] = 0, size+i, 0    # bottom of F -> left of B
+	return wrap
+
+def fold2(size):
+	#
+	#  AB    xx
+	#  C     x
+	# DE    xx
+	# F     x
+	#
+	wrap = {}
+	for i in range(size):
+		# A & F
+		wrap[-1, 3*size+i, 2] = size+i, 0, 1 # left of F -> top of A
+		wrap[size+i, -1, 3] = 0, 3*size+i, 0 # top of A -> left of F
+
+		# B & F
+		wrap[i, 4*size, 1] = 2*size+i, 0, 1    # bottom of F -> top of B
+		wrap[2*size+i, -1, 3] = i, 4*size-1, 3 # top of B -> bottom of F
+
+		# E & F
+		wrap[size+i, 3*size, 1] = size-1, 3*size+i, 2 # bottom of E -> right of F
+		wrap[size, 3*size+i, 0] = size+i, 3*size-1, 3 # right of F -> bottom of E
+
+		# A & D
+		wrap[size-1, i, 2] = 0, 3*size-1-i, 0 # left of A -> left of D
+		wrap[-1, 3*size-1-i, 2] = size, i, 0  # left of D -> left of A
+
+		# C & D
+		wrap[i, 2*size-1, 3] = size, size+i, 0 # top of D -> left of C
+		wrap[size-1, size+i, 2] = i, 2*size, 1 # left of C -> top of D
+
+		# B & C
+		wrap[2*size+i, size, 1] = 2*size-1, size+i, 2 # bottom of B -> right of C
+		wrap[2*size, size+i, 0] = 2*size+i, size-1, 3 # right of C -> bottom of B
+
+		# B & E
+		wrap[3*size, size-1-i, 0] = 2*size-1, 2*size+i, 2 # right of B -> right of E
+		wrap[2*size, 2*size+i, 0] = 3*size-1, size-1-i, 2 # right of E -> right of B
+	return wrap
+
 def gcd(a, b):
 	while b:
 		a, b = b, a % b
 	return a
 
-def wrap_cube(minmax):
+def wrap_cube(minmax, tiles):
 	min_xs, max_xs, min_ys, max_ys = minmax
 	assert min(min_xs.values()) == 0
 	assert min(min_ys.values()) == 0
 	num_cols = max(max_xs.values()) + 1
 	num_rows = max(max_ys.values()) + 1
 	size = gcd(num_cols, num_rows)
-	print('cube size =', size)
 	assert (num_cols, num_rows) in ((size*3, size*4), (size*4, size*3))
 
-	wrap = {}
-	if size == 4:
-		#
-		#   A      x
-		# BCD    xxx
-		#   EF     xx
-		#
-		for i in range(size):
-			# A & C
-			wrap[size+i, size-1, 3] = 2*size, i, 0 # top of C -> left of A
-			wrap[2*size-1, i, 2] = size+i, size, 1 # left of A -> top of C
+	shape = [''.join([' x'[(x, y) in tiles] for x in range(0, num_cols, size)])
+		for y in range(0, num_rows, size)]
 
-			# C & E
-			wrap[size+i, 2*size, 1] = 2*size, 3*size-1-i, 0     # bottom of C -> left of E
-			wrap[2*size-1, 3*size-1-i, 2] = size+i, 2*size-1, 3 # left of E -> bottom of C
+	for ty in range(0, num_rows, size):
+		for tx in range(0, num_cols, size):
+			on = (tx, ty) in tiles
+			assert all(((x, y) in tiles) is on
+				for y in range(ty, ty + size)
+					for x in range(tx, tx + size))
 
-			# A & F
-			wrap[3*size, i, 0] = 4*size-1, 3*size-1-i, 2 # right of A -> right of F
-			wrap[4*size, 3*size-1-i, 0] = 3*size-1, i, 2 # right of F -> right of A
-
-			# D & F
-			wrap[3*size, size+i, 0] = 4*size-1-i, 2*size, 1     # right of D -> top of F
-			wrap[4*size-1-i, 2*size-1, 3] = 3*size-1, size+i, 2 # top of F -> right of D
-
-			# A & B
-			wrap[i, size-1, 3] = 3*size-1-i, 0, 1 # top of B -> top of A
-			wrap[3*size-1-i, -1, 3] = i, size, 1  # top of A -> top of B
-
-			# B & E
-			wrap[i, 2*size, 1] = 3*size-1-i, 3*size-1, 3 # bottom of B -> bottom of E
-			wrap[3*size-1-i, 3*size, 1] = i, 2*size-1, 3 # bottom of E -> bottom of B
-
-			# B & F
-			wrap[-1, size+i, 2] = 4*size-1-i, 3*size-1, 3 # left of B -> bottom of F
-			wrap[4*size-1-i, 3*size, 1] = 0, size+i, 0    # bottom of F -> left of B
-	elif size == 50:
-		#
-		#  AB    xx
-		#  C     x
-		# DE    xx
-		# F     x
-		#
-		for i in range(size):
-			# A & F
-			wrap[-1, 3*size+i, 2] = size+i, 0, 1 # left of F -> top of A
-			wrap[size+i, -1, 3] = 0, 3*size+i, 0 # top of A -> left of F
-
-			# B & F
-			wrap[i, 4*size, 1] = 2*size+i, 0, 1    # bottom of F -> top of B
-			wrap[2*size+i, -1, 3] = i, 4*size-1, 3 # top of B -> bottom of F
-
-			# E & F
-			wrap[size+i, 3*size, 1] = size-1, 3*size+i, 2 # bottom of E -> right of F
-			wrap[size, 3*size+i, 0] = size+i, 3*size-1, 3 # right of F -> bottom of E
-
-			# A & D
-			wrap[size-1, i, 2] = 0, 3*size-1-i, 0 # left of A -> left of D
-			wrap[-1, 3*size-1-i, 2] = size, i, 0  # left of D -> left of A
-
-			# C & D
-			wrap[i, 2*size-1, 3] = size, size+i, 0 # top of D -> left of C
-			wrap[size-1, size+i, 2] = i, 2*size, 1 # left of C -> top of D
-
-			# B & C
-			wrap[2*size+i, size, 1] = 2*size-1, size+i, 2 # bottom of B -> right of C
-			wrap[2*size, size+i, 0] = 2*size+i, size-1, 3 # right of C -> bottom of B
-
-			# B & E
-			wrap[3*size, size-1-i, 0] = 2*size-1, 2*size+i, 2 # right of B -> right of E
-			wrap[2*size, 2*size+i, 0] = 3*size-1, size-1-i, 2 # right of E -> right of B
-	return wrap
+	if shape == ['  x ', 'xxx ', '  xx']: return fold1(size)
+	if shape == [' xx', ' x ', 'xx ', 'x  ']: return fold2(size)
+	sys.exit('Cannot fold cube!')
 
 def main():
 	tiles, path = read_input(sys.stdin)
@@ -171,5 +187,5 @@ def main():
 		sys.exit('No open tile in the top row!')
 
 	print('Part 1:', move1(tiles, path, x, y, minmax))
-	print('Part 2:', move2(tiles, path, x, y, wrap_cube(minmax)))
+	print('Part 2:', move2(tiles, path, x, y, wrap_cube(minmax, tiles)))
 main()
