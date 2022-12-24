@@ -24,35 +24,32 @@ def read_input():
 
 	num_rows = len(rows)
 	num_cols = row_len - 2
-	d = gcd(num_rows, num_cols)
-	num_states = num_rows * num_cols // d
+	num_states = num_rows * num_cols // gcd(num_rows, num_cols)
 
-	start_xy = 0, 0
-	end_xy = num_cols - 1, num_rows + 1
-	clear = {start_xy, end_xy}
-	blizzard_lists = [[] for i in range(4)]
+	blizzard_lists = [[] for i in range(5)]
 	for y, row in enumerate(rows, start=1):
 		for x, c in enumerate(row[1:-1]):
-			if c == '.':
-				clear.add((x, y))
-			else:
-				blizzard_lists['^v<>'.index(c)].append((x, y))
-	dxdy = ((0,-1),(0,1),(-1,0),(1,0))
+			blizzard_lists['.^v<>'.index(c)].append((x, y))
+
+	start_xy, end_xy = (0, 0), (num_cols-1, num_rows+1)
+	clear = {start_xy, end_xy}
+	clear.update(blizzard_lists.pop(0))
 	states = [clear]
-	while True:
-		blizzard_lists = [[((x + dx) % num_cols, 1 + (y - 1 + dy) % num_rows) for x, y in blizzard_list]
-			for blizzard_list, (dx, dy) in zip(blizzard_lists, dxdy)]
+	for i in range(1, num_states+1):
 		blizzards = set()
-		blizzards.update(*blizzard_lists)
+		blizzards.update(
+			[(x, 1 + (y-1-i) % num_rows) for x, y in blizzard_lists[0]],
+			[(x, 1 + (y-1+i) % num_rows) for x, y in blizzard_lists[1]],
+			[((x-i) % num_cols, y) for x, y in blizzard_lists[2]],
+			[((x+i) % num_cols, y) for x, y in blizzard_lists[3]])
 		clear = {start_xy, end_xy}
 		clear.update((x, y)
-			for y in range(1, num_rows + 1)
+			for y in range(1, num_rows+1)
 				for x in range(num_cols)
 					if (x, y) not in blizzards)
-		if clear == states[0]: break
 		states.append(clear)
-	assert len(states) == num_states
-	return states, end_xy
+	assert states.pop() == states[0]
+	return states, start_xy, end_xy
 
 def trip(states, start_xy, end_xy, step):
 	num_states = len(states)
@@ -76,10 +73,10 @@ def trip(states, start_xy, end_xy, step):
 	return best
 
 def main():
-	states, end_xy = read_input()
-	steps = trip(states, (0, 0), end_xy, 0)
+	states, start_xy, end_xy = read_input()
+	steps = trip(states, start_xy, end_xy, 0)
 	print('Part 1:', steps)
-	steps = trip(states, end_xy, (0, 0), steps)
-	steps = trip(states, (0, 0), end_xy, steps)
+	steps = trip(states, end_xy, start_xy, steps)
+	steps = trip(states, start_xy, end_xy, steps)
 	print('Part 2:', steps)
 main()
