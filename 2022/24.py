@@ -26,28 +26,21 @@ def read_input():
 	num_cols = row_len - 2
 	num_states = num_rows * num_cols // gcd(num_rows, num_cols)
 
-	blizzard_lists = [[] for i in range(5)]
+	blizzards = [[] for i in range(4)]
 	for y, row in enumerate(rows, start=1):
 		for x, c in enumerate(row[1:-1]):
-			blizzard_lists['.^v<>'.index(c)].append((x, y))
+			if c != '.': blizzards['^v<>'.index(c)].append((x, y))
 
 	start_xy, end_xy = (0, 0), (num_cols-1, num_rows+1)
-	clear = {start_xy, end_xy}
-	clear.update(blizzard_lists.pop(0))
-	states = [clear]
-	for i in range(1, num_states+1):
-		blizzards = set()
-		blizzards.update(
-			[(x, 1 + (y-1-i) % num_rows) for x, y in blizzard_lists[0]],
-			[(x, 1 + (y-1+i) % num_rows) for x, y in blizzard_lists[1]],
-			[((x-i) % num_cols, y) for x, y in blizzard_lists[2]],
-			[((x+i) % num_cols, y) for x, y in blizzard_lists[3]])
-		clear = {start_xy, end_xy}
-		clear.update((x, y)
-			for y in range(1, num_rows+1)
-				for x in range(num_cols)
-					if (x, y) not in blizzards)
-		states.append(clear)
+	all_xy = {start_xy, end_xy}
+	all_xy.update((x, y) for y in range(1, num_rows+1) for x in range(num_cols))
+	states = [all_xy.difference(*blizzards)]
+	states.extend(all_xy.difference(
+			[(x, 1 + (y-1-i) % num_rows) for x, y in blizzards[0]],
+			[(x, 1 + (y-1+i) % num_rows) for x, y in blizzards[1]],
+			[((x-i) % num_cols, y) for x, y in blizzards[2]],
+			[((x+i) % num_cols, y) for x, y in blizzards[3]])
+			for i in range(1, num_states+1))
 	assert states.pop() == states[0]
 	return states, start_xy, end_xy
 
