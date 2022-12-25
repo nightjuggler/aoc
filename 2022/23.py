@@ -10,7 +10,7 @@ def read_input():
 
 def play(elves, slices):
 	moved = False
-	proposals = {}
+	proposed = {}
 	for x, y in elves:
 		adjacent = [(ax, ay) in elves
 			for ay in (y-1, y, y+1)
@@ -19,9 +19,9 @@ def play(elves, slices):
 		for s, dx, dy in slices:
 			if not sum(adjacent[s]):
 				new_xy = x + dx, y + dy
-				proposals[new_xy] = None if new_xy in proposals else (x, y)
+				proposed[new_xy] = None if new_xy in proposed else (x, y)
 				break
-	for new_xy, old_xy in proposals.items():
+	for new_xy, old_xy in proposed.items():
 		if old_xy:
 			elves.remove(old_xy)
 			elves.add(new_xy)
