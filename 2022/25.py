@@ -1,24 +1,20 @@
-import sys
-
 def to_snafu(n):
+	assert isinstance(n, int) and n >= 0
 	carry = 0
 	digits = []
 	while n:
-		n, r = divmod(n, 5)
-		r += carry
-		carry = r > 2
-		digits.append('012=-0'[r])
-	if carry:
-		digits.append('1')
+		n, digit = divmod(n, 5)
+		digit += carry
+		carry = digit > 2
+		digits.append('012=-0'[digit])
+	if carry or not digits:
+		digits.append('01'[carry])
 	return ''.join(digits[::-1])
 
-def main():
-	snafu = {digit: value for value, digit in enumerate('=-012', start=-2)}
+def from_snafu(n):
+	n = n.strip()
+	assert n and not n.strip('=-012')
+	return sum(('=-012'.index(d) - 2) * 5**x for x, d in enumerate(n[::-1]))
 
-	def from_snafu(n):
-		n = n.strip()
-		assert n and not n.strip('=-012')
-		return sum(snafu[d] * 5**x for x, d in enumerate(n[::-1]))
-
-	print(to_snafu(sum(map(from_snafu, sys.stdin))))
-main()
+import sys
+print(to_snafu(sum(map(from_snafu, sys.stdin))))
