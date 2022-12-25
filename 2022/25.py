@@ -1,15 +1,15 @@
 def to_snafu(n):
-	assert isinstance(n, int) and n >= 0
+	assert isinstance(n, int)
 	carry = 0
 	digits = []
-	while n:
+	end = (0, 0) if n >= 0 else (-1, 5)
+	while True:
 		n, digit = divmod(n, 5)
 		digit += carry
+		if (n, digit) == end: break
 		carry = digit > 2
 		digits.append('012=-0'[digit])
-	if carry or not digits:
-		digits.append('01'[carry])
-	return ''.join(digits[::-1])
+	return ''.join(digits[::-1]) or '0'
 
 def from_snafu(n):
 	n = n.strip()
