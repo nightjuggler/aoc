@@ -1,14 +1,10 @@
 def to_snafu(n):
 	assert isinstance(n, int)
-	carry = 0
 	digits = []
-	end = (0, 0) if n >= 0 else (-1, 5)
-	while True:
+	while n:
 		n, digit = divmod(n, 5)
-		digit += carry
-		if (n, digit) == end: break
-		carry = digit > 2
-		digits.append('012=-0'[digit])
+		if digit > 2: n += 1
+		digits.append('012=-'[digit])
 	return ''.join(digits[::-1]) or '0'
 
 def from_snafu(n):
