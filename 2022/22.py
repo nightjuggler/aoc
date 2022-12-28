@@ -17,48 +17,104 @@ def read_input(f):
 			for x, c in enumerate(m.group(2), start=len(m.group(1))))
 	return tiles, path
 
-def get_minmax(tiles):
-	min_xs, max_xs, min_ys, max_ys = {}, {}, {}, {}
+def wrap_plane(tiles):
+	minmax_x, minmax_y = {}, {}
 	for x, y in tiles:
-		if y in min_xs:
-			if x < min_xs[y]: min_xs[y] = x
-			elif x > max_xs[y]: max_xs[y] = x
+		if m := minmax_x.get(y):
+			if   x < m[0]: m[0] = x
+			elif x > m[1]: m[1] = x
 		else:
-			min_xs[y] = max_xs[y] = x
-		if x in min_ys:
-			if y < min_ys[x]: min_ys[x] = y
-			elif y > max_ys[x]: max_ys[x] = y
+			minmax_x[y] = [x, x]
+		if m := minmax_y.get(x):
+			if   y < m[0]: m[0] = y
+			elif y > m[1]: m[1] = y
 		else:
-			min_ys[x] = max_ys[x] = y
-	return min_xs, max_xs, min_ys, max_ys
+			minmax_y[x] = [y, y]
+	wrap = {}
+	wrap.update(((max_x+1, y, 0), (min_x, y, 0)) for y, (min_x, max_x) in minmax_x.items())
+	wrap.update(((min_x-1, y, 2), (max_x, y, 2)) for y, (min_x, max_x) in minmax_x.items())
+	wrap.update(((x, max_y+1, 1), (x, min_y, 1)) for x, (min_y, max_y) in minmax_y.items())
+	wrap.update(((x, min_y-1, 3), (x, max_y, 3)) for x, (min_y, max_y) in minmax_y.items())
+	return wrap
 
-def move1(tiles, path, x, y, minmax):
-	facing = 0
-	dxdy = (1, 0), (0, 1), (-1, 0), (0, -1)
-	min_xs, max_xs, min_ys, max_ys = minmax
-	for move in path:
-		if move == 'L': facing = (facing - 1) % 4; continue
-		if move == 'R': facing = (facing + 1) % 4; continue
-		dx, dy = dxdy[facing]
-		if dx:
-			min_x, max_x = min_xs[y], max_xs[y]
-			for _ in range(int(move)):
-				last_x = x
-				x += dx
-				if x < min_x: x = max_x
-				elif x > max_x: x = min_x
-				if not tiles[x, y]: x = last_x; break
-		else:
-			min_y, max_y = min_ys[x], max_ys[x]
-			for _ in range(int(move)):
-				last_y = y
-				y += dy
-				if y < min_y: y = max_y
-				elif y > max_y: y = min_y
-				if not tiles[x, y]: y = last_y; break
-	return 1000*(y+1) + 4*(x+1) + facing
+def coords(size, x, y, facing, offmap):
+	d1 = 1 - facing//2
+	if not offmap: facing = (facing + 2) % 4
+	d2 = facing//2
 
-def move2(tiles, path, x, y, wrap):
+	if facing % 2:
+		cx = x*size
+		cy = (y + d1)*size - d2
+		return [(x, cy, facing) for x in range(cx, cx+size)]
+
+	cx = (x + d1)*size - d2
+	cy = y*size
+	return [(cx, y, facing) for y in range(cy, cy+size)]
+
+def gcd(a, b):
+	while b:
+		a, b = b, a % b
+	return a
+
+def wrap_cube(tiles):
+	num_cols = max(x for x, y in tiles) + 1
+	num_rows = max(y for x, y in tiles) + 1
+	size = gcd(num_cols, num_rows)
+	assert sorted((num_cols // size, num_rows // size)) == [3, 4]
+
+	for ty in range(0, num_rows, size):
+		for tx in range(0, num_cols, size):
+			on = (tx, ty) in tiles
+			assert all(((x, y) in tiles) is on
+				for y in range(ty, ty + size)
+					for x in range(tx, tx + size))
+	i = iter('123456')
+	shape = '|'.join([''.join([next(i) if (x, y) in tiles else '.'
+		for x in range(0, num_cols, size)])
+			for y in range(0, num_rows, size)])
+	shapes = {
+		'..1.|234.|..56': (
+		#   A      1
+		# BCD    234
+		#   EF     56
+		'1<3^',  #   left of A ->    top of C
+		'3v5<-', # bottom of C ->   left of E reversed
+		'1>6>-', #  right of A ->  right of F reversed
+		'4>6^-', #  right of D ->    top of F reversed
+		'1^2^-', #    top of A ->    top of B reversed
+		'2v5v-', # bottom of B -> bottom of E reversed
+		'2<6v-', #   left of B -> bottom of F reversed
+		),
+		'.12|.3.|45.|6..': (
+		#  AB    12
+		#  C     3
+		# DE    45
+		# F     6
+		'1^6<',  #    top of A ->   left of F
+		'2^6v',  #    top of B -> bottom of F
+		'5v6>',  # bottom of E ->  right of F
+		'1<4<-', #   left of A ->   left of D reversed
+		'3<4^',  #   left of C ->    top of D
+		'2v3>',  # bottom of B ->  right of C
+		'2>5>-', #  right of B ->  right of E reversed
+		),
+	}
+	wrap = {}
+	sides = [(x, y) for y, row in enumerate(shape.split('|')) for x, side in enumerate(row) if side != '.']
+	for s1,d1,s2,d2,*rev in shapes[shape]:
+		side1 = *sides['123456'.index(s1)], '>v<^'.index(d1)
+		side2 = *sides['123456'.index(s2)], '>v<^'.index(d2)
+		pos1 = coords(size, *side1, True)
+		pos2 = coords(size, *side2, False)
+		if rev: pos2 = pos2[::-1]
+		wrap.update(zip(pos1, pos2))
+		pos1 = coords(size, *side2, True)
+		pos2 = coords(size, *side1, False)
+		if rev: pos2 = pos2[::-1]
+		wrap.update(zip(pos1, pos2))
+	return wrap
+
+def follow(tiles, path, x, y, wrap):
 	facing = 0
 	dxdy = (1, 0), (0, 1), (-1, 0), (0, -1)
 	for move in path:
@@ -72,120 +128,14 @@ def move2(tiles, path, x, y, wrap):
 			x, y, facing = pos
 	return 1000*(y+1) + 4*(x+1) + facing
 
-def fold1(size):
-	#
-	#   A      x
-	# BCD    xxx
-	#   EF     xx
-	#
-	wrap = {}
-	for i in range(size):
-		# A & C
-		wrap[size+i, size-1, 3] = 2*size, i, 0 # top of C -> left of A
-		wrap[2*size-1, i, 2] = size+i, size, 1 # left of A -> top of C
-
-		# C & E
-		wrap[size+i, 2*size, 1] = 2*size, 3*size-1-i, 0     # bottom of C -> left of E
-		wrap[2*size-1, 3*size-1-i, 2] = size+i, 2*size-1, 3 # left of E -> bottom of C
-
-		# A & F
-		wrap[3*size, i, 0] = 4*size-1, 3*size-1-i, 2 # right of A -> right of F
-		wrap[4*size, 3*size-1-i, 0] = 3*size-1, i, 2 # right of F -> right of A
-
-		# D & F
-		wrap[3*size, size+i, 0] = 4*size-1-i, 2*size, 1     # right of D -> top of F
-		wrap[4*size-1-i, 2*size-1, 3] = 3*size-1, size+i, 2 # top of F -> right of D
-
-		# A & B
-		wrap[i, size-1, 3] = 3*size-1-i, 0, 1 # top of B -> top of A
-		wrap[3*size-1-i, -1, 3] = i, size, 1  # top of A -> top of B
-
-		# B & E
-		wrap[i, 2*size, 1] = 3*size-1-i, 3*size-1, 3 # bottom of B -> bottom of E
-		wrap[3*size-1-i, 3*size, 1] = i, 2*size-1, 3 # bottom of E -> bottom of B
-
-		# B & F
-		wrap[-1, size+i, 2] = 4*size-1-i, 3*size-1, 3 # left of B -> bottom of F
-		wrap[4*size-1-i, 3*size, 1] = 0, size+i, 0    # bottom of F -> left of B
-	return wrap
-
-def fold2(size):
-	#
-	#  AB    xx
-	#  C     x
-	# DE    xx
-	# F     x
-	#
-	wrap = {}
-	for i in range(size):
-		# A & F
-		wrap[-1, 3*size+i, 2] = size+i, 0, 1 # left of F -> top of A
-		wrap[size+i, -1, 3] = 0, 3*size+i, 0 # top of A -> left of F
-
-		# B & F
-		wrap[i, 4*size, 1] = 2*size+i, 0, 1    # bottom of F -> top of B
-		wrap[2*size+i, -1, 3] = i, 4*size-1, 3 # top of B -> bottom of F
-
-		# E & F
-		wrap[size+i, 3*size, 1] = size-1, 3*size+i, 2 # bottom of E -> right of F
-		wrap[size, 3*size+i, 0] = size+i, 3*size-1, 3 # right of F -> bottom of E
-
-		# A & D
-		wrap[size-1, i, 2] = 0, 3*size-1-i, 0 # left of A -> left of D
-		wrap[-1, 3*size-1-i, 2] = size, i, 0  # left of D -> left of A
-
-		# C & D
-		wrap[i, 2*size-1, 3] = size, size+i, 0 # top of D -> left of C
-		wrap[size-1, size+i, 2] = i, 2*size, 1 # left of C -> top of D
-
-		# B & C
-		wrap[2*size+i, size, 1] = 2*size-1, size+i, 2 # bottom of B -> right of C
-		wrap[2*size, size+i, 0] = 2*size+i, size-1, 3 # right of C -> bottom of B
-
-		# B & E
-		wrap[3*size, size-1-i, 0] = 2*size-1, 2*size+i, 2 # right of B -> right of E
-		wrap[2*size, 2*size+i, 0] = 3*size-1, size-1-i, 2 # right of E -> right of B
-	return wrap
-
-def gcd(a, b):
-	while b:
-		a, b = b, a % b
-	return a
-
-def wrap_cube(minmax, tiles):
-	min_xs, max_xs, min_ys, max_ys = minmax
-	assert min(min_xs.values()) == 0
-	assert min(min_ys.values()) == 0
-	num_cols = max(max_xs.values()) + 1
-	num_rows = max(max_ys.values()) + 1
-	size = gcd(num_cols, num_rows)
-	assert (num_cols, num_rows) in ((size*3, size*4), (size*4, size*3))
-
-	shape = [''.join([' x'[(x, y) in tiles] for x in range(0, num_cols, size)])
-		for y in range(0, num_rows, size)]
-
-	for ty in range(0, num_rows, size):
-		for tx in range(0, num_cols, size):
-			on = (tx, ty) in tiles
-			assert all(((x, y) in tiles) is on
-				for y in range(ty, ty + size)
-					for x in range(tx, tx + size))
-
-	if shape == ['  x ', 'xxx ', '  xx']: return fold1(size)
-	if shape == [' xx', ' x ', 'xx ', 'x  ']: return fold2(size)
-	sys.exit('Cannot fold cube!')
-
 def main():
 	tiles, path = read_input(sys.stdin)
-	minmax = get_minmax(tiles)
 
 	# "You begin the path in the leftmost open tile of the top row of tiles."
-	y = 0
-	x = minmax[0][y]
-	while (tile := tiles.get((x, y))) == 0: x += 1
-	if tile is None:
+	x = min((x for (x, y), tile in tiles.items() if not y and tile), default=None)
+	if x is None:
 		sys.exit('No open tile in the top row!')
 
-	print('Part 1:', move1(tiles, path, x, y, minmax))
-	print('Part 2:', move2(tiles, path, x, y, wrap_cube(minmax, tiles)))
+	print('Part 1:', follow(tiles, path, x, 0, wrap_plane(tiles)))
+	print('Part 2:', follow(tiles, path, x, 0, wrap_cube(tiles)))
 main()
