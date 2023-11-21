@@ -27,25 +27,30 @@ def connect(graph, loc, node):
 	return keys
 
 def process(start):
+	locs = 0
 	graph = {}
 	all_keys = 0
-	num_locs = len(start)
-	assert 1 <= num_locs <= 4
+	vault_keys = []
+	assert 1 <= len(start) <= 4
 	for i, node in enumerate(start):
-		start[i] = loc = 27 + i
-		all_keys |= connect(graph, loc, node)
+		loc = 27 + i
+		locs |= loc << i*6
+		keys = connect(graph, loc, node)
+		all_keys |= keys
+		vault_keys.append((i*6, keys))
 	seen = {}
 	best = None
 	q = deque()
-	q.append((0, sum(loc << i*6 for i, loc in enumerate(start)), 0))
+	q.append((0, locs, 0))
 	while q:
 		step, locs, keys = q.popleft()
-		state = (locs, keys)
+		state = locs, keys
 		steps = seen.get(state)
 		if steps is not None and steps <= step: continue
 		seen[state] = step
 		if best is not None and best <= step: continue
-		for i in range(0, num_locs*6, 6):
+		for i, vkeys in vault_keys:
+			if keys & vkeys == vkeys: continue
 			for dest, steps in graph[(locs >> i) & 63]:
 				if not (dest & 32): # key
 					dest_keys = keys | (1 << (dest & 31))
