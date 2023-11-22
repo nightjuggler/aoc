@@ -27,6 +27,37 @@ def connect(graph, loc, node):
 				q.extend((step + 1, node) for node in adjacent)
 	return keys
 
+def connect_keys(graph):
+	# From every node that's not a door (keys and start nodes), find paths to
+	# every other reachable node while keeping track of which keys are required
+	# along the way, either for opening doors or because they should be collected
+	# first. Discard paths for which the required keys are a superset of the keys
+	# required by another path unless the superset path is shorter.
+	# Return a mapping that maps every non-door node to a list of 3-tuples. Each
+	# 3-tuple represents a path from that node to a key: the number of the key,
+	# the number of steps to the key, and the other keys needed along that path.
+	q = deque()
+	new_graph = {}
+	for loc in graph:
+		if loc & 32: continue
+		paths = {}
+		q.extend((dest, steps, 0) for dest, steps in graph[loc])
+		while q:
+			dest, steps, keys = q.popleft()
+			p = paths.get(dest)
+			if p is None:
+				paths[dest] = p = []
+			elif any(steps >= p_steps and keys & p_keys == p_keys
+				for p_steps, p_keys in p): continue
+			p.append((steps, keys))
+			keys |= 1 << (dest & 31)
+			q.extend((next_dest, steps + next_steps, keys)
+				for next_dest, next_steps in graph[dest])
+		new_graph[loc] = [(dest, steps, keys)
+			for dest, p in paths.items() if not dest & 32
+			for steps, keys in p]
+	return new_graph
+
 def process(start):
 	locs = 0
 	graph = {}
@@ -39,6 +70,7 @@ def process(start):
 		keys = connect(graph, loc, node)
 		all_keys |= keys
 		vault_keys.append((i*6, keys))
+	graph = connect_keys(graph)
 	seen = {}
 	best = None
 	q = deque()
@@ -53,23 +85,14 @@ def process(start):
 		for i, vkeys in vault_keys:
 			if not keys & vkeys: continue
 			new_locs = locs & ~(63 << i)
-			for dest, steps in graph[(locs >> i) & 63]:
-				key = 1 << (dest & 31)
+			for dest, steps, keys_needed in graph[(locs >> i) & 63]:
+				if keys & keys_needed: continue
+				key = 1 << dest
 				if not keys & key:
-					#
-					# If the "key" bit is not set in "keys", the destination is
-					# either (1) a key we already have or (2) a door for which we
-					# already have the key. Either way, we can move there.
-					#
-					q.append((step + steps, new_locs | (dest << i), keys))
-				elif dest & 32:
-					# The destination is a door for which we don't have the key.
-					continue
+					continue # We already have this key.
 				elif keys == key:
-					# The destination is the last key we still need to collect.
 					if best is None or step + steps < best: best = step + steps
 				else:
-					# The destination is a key we don't have yet. Go there. Take the key.
 					q.append((step + steps, new_locs | (dest << i), keys - key))
 	return best
 
