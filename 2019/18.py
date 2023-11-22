@@ -21,7 +21,8 @@ def connect(graph, loc, node):
 			if loc and step:
 				dest.append((loc & 63, step))
 				pq.append((loc & 63, node))
-				keys |= 1 << (loc & 31)
+				if not loc & 32:
+					keys |= 1 << (loc & 31)
 			else:
 				q.extend((step + 1, node) for node in adjacent)
 	return keys
