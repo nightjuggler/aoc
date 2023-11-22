@@ -41,7 +41,7 @@ def process(start):
 	seen = {}
 	best = None
 	q = deque()
-	q.append((0, locs, 0))
+	q.append((0, locs, all_keys))
 	while q:
 		step, locs, keys = q.popleft()
 		state = locs, keys
@@ -50,18 +50,26 @@ def process(start):
 		seen[state] = step
 		if best is not None and best <= step: continue
 		for i, vkeys in vault_keys:
-			if keys & vkeys == vkeys: continue
+			if not keys & vkeys: continue
+			new_locs = locs & ~(63 << i)
 			for dest, steps in graph[(locs >> i) & 63]:
-				if not (dest & 32): # key
-					dest_keys = keys | (1 << (dest & 31))
-					if dest_keys == all_keys:
-						if best is None or steps + step < best: best = steps + step
-						continue
-				elif keys & (1 << (dest & 31)): # door and have key
-					dest_keys = keys
-				else:
+				key = 1 << (dest & 31)
+				if not keys & key:
+					#
+					# If the "key" bit is not set in "keys", the destination is
+					# either (1) a key we already have or (2) a door for which we
+					# already have the key. Either way, we can move there.
+					#
+					q.append((step + steps, new_locs | (dest << i), keys))
+				elif dest & 32:
+					# The destination is a door for which we don't have the key.
 					continue
-				q.append((steps + step, locs & ~(63 << i) | (dest << i), dest_keys))
+				elif keys == key:
+					# The destination is the last key we still need to collect.
+					if best is None or step + steps < best: best = step + steps
+				else:
+					# The destination is a key we don't have yet. Go there. Take the key.
+					q.append((step + steps, new_locs | (dest << i), keys - key))
 	return best
 
 def odd_gt3(n): return n > 3 and n & 1
