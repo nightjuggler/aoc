@@ -154,7 +154,6 @@ def part2(aa, graph, max_level):
 	heappush(q, (0, 0, aa))
 	while q:
 		level, step, node = heappop(q)
-		steps = seen.get(node)
 		state = level, node
 		steps = seen.get(state)
 		if steps is not None and steps <= step: continue
