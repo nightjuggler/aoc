@@ -1,3 +1,4 @@
+import math
 import re
 import sys
 
@@ -93,6 +94,10 @@ def get_a_b(actions, size):
 			b = -b
 		a %= size
 		b %= size
+	print('a =', a)
+	print('b =', b)
+	if math.gcd(a-1, size) != 1:
+		err(f'a-1 ({a-1}) is not coprime to size ({size})!')
 	return a, b
 
 def shuffle(actions, pos, size, reps):
@@ -103,7 +108,7 @@ def shuffle(actions, pos, size, reps):
 	# Each repetition of the shuffle process multiplies the previous
 	# result by "a" and adds "b". So, for example, if reps == 3,
 	#
-	# new_pos = (((pos*a) + b)*a + b)*a + b
+	# new_pos = ((pos*a + b)*a + b)*a + b
 	#         = pos*a*a*a + (b*a*a + b*a + b)
 	#         = pos*(a**3) + b*(a**2 + a**1 + a**0)
 	#
