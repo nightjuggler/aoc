@@ -74,24 +74,18 @@ def run(program):
 			sys.exit(f'Unknown opcode {op} at position {i}!')
 	return ''.join(output)
 
-class UnexpectedOutput(Exception):
-	pass
-
-def play_interactive(program):
-	while True:
-		command = input()
-		try:
-			output = program.send(command + '\n')
-		except StopIteration as e:
-			print(e.value.rstrip())
-			break
-		print(output.rstrip())
-
 def main():
 	with open('data/25.input') as f:
 		program = dict(enumerate(map(int, f.readline().split(','))))
 	program = run(program)
 
+	floor_description = (
+		'\n\n\n== Pressure-Sensitive Floor ==\n'
+		'Analyzing...\n\n'
+		'Doors here lead:\n- north\n\n'
+	)
+	check_fail_pattern = re.compile('Droids on this ship are (heavier|lighter) than the detected value')
+	check_pass_pattern = re.compile('You should be able to get in by typing ([0-9]+) on the keypad')
 	room_pattern = re.compile('^\\n\\n\\n'
 		'== ([A-Z][a-z]+(?: [A-Z][a-z]+)*) ==\\n'
 		'[- \',.0-9:;?A-Za-z]+\\n\\n'
@@ -106,10 +100,10 @@ def main():
 		'photons',
 	)
 	move_back = {
-		'north\n': 'south\n',
-		'south\n': 'north\n',
-		'east\n': 'west\n',
-		'west\n': 'east\n',
+		'north': 'south',
+		'south': 'north',
+		'east': 'west',
+		'west': 'east',
 	}
 	inventory = []
 	checkpoint_path = None
@@ -119,25 +113,22 @@ def main():
 		try:
 			output = program.send(f'{command} {item}\n')
 		except StopIteration as e:
-			print(e.value)
-			sys.exit('Program ended!')
+			sys.exit(e.value.strip())
 		if output != f'\nYou {command} the {item}.\n\nCommand?\n':
-			print(output)
-			raise UnexpectedOutput()
+			sys.exit(output.strip())
 
 	def move(door):
+		if door: door += '\n'
 		try:
 			output = program.send(door)
 		except StopIteration as e:
-			print(e.value)
-			sys.exit('Program ended!')
+			sys.exit(e.value.strip())
 		m = room_pattern.match(output)
 		if not m:
-			print(output)
-			raise UnexpectedOutput()
+			sys.exit(output.strip())
 		room, doors, items = m.groups()
-		doors = doors.split('- ')[1:]
-		items = items.split('- ')[1:] if items else []
+		doors = doors.strip('\n- ').split('\n- ')
+		items = items.strip('\n- ').split('\n- ') if items else []
 		return room, doors, items
 
 	def explore(path):
@@ -149,11 +140,11 @@ def main():
 			door = back = None
 		room, doors, items = move(door)
 		for item in items:
-			item = item[:-1]
 			if item not in do_not_take:
 				take(item)
 				inventory.append(item)
 		if room == 'Security Checkpoint':
+			assert door == 'south' and doors == ['north', 'south']
 			checkpoint_path = path.copy()
 		else:
 			for door in doors:
@@ -164,55 +155,43 @@ def main():
 		if back:
 			move(back)
 
-	def check_move():
-		x1 = (
-			'\n\n\n== Pressure-Sensitive Floor ==\n'
-			'Analyzing...\n\n'
-			'Doors here lead:\n- north\n\n'
-		)
-		x2 = x1 + 'A loud, robotic voice says "Alert! Droids on this ship are '
-		x3 = (
-			' than the detected value!" and you are ejected back to the checkpoint.\n'
-			'\n\n\n== Security Checkpoint ==\n'
-		)
+	def check_weight():
 		try:
 			output = program.send('south\n')
+			pattern = check_fail_pattern
 		except StopIteration as e:
-			sys.exit(e.value.removeprefix(x1).rstrip())
+			output = e.value
+			pattern = check_pass_pattern
 
-		i = len(x2)
-		j = i + len('lighter') # len('lighter') == len('heavier')
-		k = j + len(x3)
-		s = output[i:j]
-
-		if not (output[:i] == x2
-			and (s == 'lighter' or s == 'heavier')
-			and output[j:k] == x3
-		):
-			print(output)
-			raise UnexpectedOutput()
-
-		return s == 'lighter'
+		if not output.startswith(floor_description):
+			sys.exit(output.strip())
+		m = pattern.search(output.removeprefix(floor_description))
+		if not m:
+			sys.exit(output.strip())
+		value = m.group(1)
+		if pattern is check_pass_pattern:
+			print('The password is', value)
+			return 0
+		return -1 if value == 'lighter' else 1
 
 	def combine(taken, remaining):
-		if check_move(): return
+		cmp = check_weight()
+		if cmp == 0: return True
+		if cmp < 0: return False
 		for i, item in enumerate(remaining):
 			take(item)
 			taken.append(item)
-			combine(taken, remaining[i+1:])
+			if combine(taken, remaining[i+1:]):
+				return True
 			take(item, drop=True)
 			taken.pop()
+		return False
 
-	try:
-		explore([])
-		# Move back to the security checkpoint, and drop all items.
-		for door in checkpoint_path:
-			move(door)
-		for item in inventory:
-			take(item, drop=True)
-		combine([], inventory)
-	except UnexpectedOutput:
-		pass
-
-	play_interactive(program)
+	explore([])
+	# Move back to the security checkpoint, and drop all items.
+	for door in checkpoint_path:
+		move(door)
+	for item in inventory:
+		take(item, drop=True)
+	combine([], inventory)
 main()
