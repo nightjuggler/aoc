@@ -1,68 +1,55 @@
 import sys
 
-def part1(lines):
-	symbols = set()
-	numbers = []
-	num_digits = 0
-
-	for y, line in enumerate(lines):
-		for x, c in enumerate(line):
-			if 48 <= ord(c) <= 57:
-				num_digits += 1
-			else:
-				if num_digits:
-					x1 = x - num_digits
-					numbers.append((y, x1, x, int(line[x1:x])))
-					num_digits = 0
-				if c != '.':
-					symbols.add((y, x))
-		if num_digits:
-			x = len(line)
-			x1 = x - num_digits
-			numbers.append((y, x1, x, int(line[x1:x])))
-			num_digits = 0
-
-	return sum(n for y, x1, x2, n in numbers
-		if (y, x1-1) in symbols or (y, x2) in symbols or
-			any((y-1, x) in symbols or (y+1, x) in symbols for x in range(x1-1, x2+1)))
-
-def part2(lines):
-	gears = set()
+def read_input():
 	digits = {}
+	symbols = {}
 	numbers = []
 	num_index = 0
 	num_digits = 0
 
-	for y, line in enumerate(lines):
+	for y, line in enumerate(sys.stdin):
+		line = line.rstrip()
 		for x, c in enumerate(line):
 			if 48 <= ord(c) <= 57:
 				num_digits += 1
-				digits[y, x] = num_index
+				digits[x, y] = num_index
 			else:
 				if num_digits:
 					numbers.append(int(line[x-num_digits:x]))
 					num_index += 1
 					num_digits = 0
-				if c == '*':
-					gears.add((y, x))
+				if c != '.':
+					symbols[x, y] = c
 		if num_digits:
 			numbers.append(int(line[-num_digits:]))
 			num_index += 1
 			num_digits = 0
 
-	sum_gear_ratios = 0
-	for y, x in gears:
-		adj_nums = set(digits.get((ay, ax))
+	return numbers, digits, symbols
+
+def part1(numbers, digits, symbols):
+	nums = set(digits.get((ax, ay))
+		for x, y in symbols
+		for ay in range(y-1, y+2)
+		for ax in range(x-1, x+2))
+	nums.discard(None)
+	return sum(numbers[i] for i in nums)
+
+def part2(numbers, digits, symbols):
+	def gear_ratio(x, y):
+		nums = set(digits.get((ax, ay))
 			for ay in range(y-1, y+2)
 			for ax in range(x-1, x+2))
-		adj_nums.remove(None)
-		if len(adj_nums) == 2:
-			i, j = adj_nums
-			sum_gear_ratios += numbers[i] * numbers[j]
-	return sum_gear_ratios
+		nums.discard(None)
+		if len(nums) == 2:
+			i, j = nums
+			return numbers[i] * numbers[j]
+		return 0
+
+	return sum(gear_ratio(x, y) for (x, y), c in symbols.items() if c == '*')
 
 def main():
-	lines = [line.rstrip() for line in sys.stdin]
-	print('Part 1:', part1(lines))
-	print('Part 2:', part2(lines))
+	data = read_input()
+	print('Part 1:', part1(*data))
+	print('Part 2:', part2(*data))
 main()
