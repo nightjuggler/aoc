@@ -1,8 +1,8 @@
 import sys
 
 def read_input(f):
-	_, seeds = f.readline().split(':')
-	seeds = list(map(int, seeds.split()))
+	line = f.readline()
+	seeds = list(map(int, line.removeprefix('seeds:').split()))
 	assert f.readline() == '\n'
 
 	names = 'seed', 'soil', 'fertilizer', 'water', 'light', 'temperature', 'humidity', 'location'
