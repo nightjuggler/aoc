@@ -29,8 +29,7 @@ def part1(path, graph):
 	steps = 0
 	while node != 'ZZZ':
 		if node not in graph:
-			print(f'Node {node} doesn\'t exist!')
-			return None
+			return f'Node {node} doesn\'t exist!'
 		node = graph[node][path[steps % pathlen]]
 		steps += 1
 	return steps
@@ -47,24 +46,29 @@ def part2(path, graph):
 		if node[2] != 'A': continue
 		steps = 0
 		state = {}
-		z_steps = None
-		z_node = None
 		a_node = node
 		while True:
-			key = steps % pathlen, node
+			i = steps % pathlen
+			key = i, node
 			if key in state: break
 			state[key] = steps
-			node = graph[node][path[steps % pathlen]]
+			node = graph[node][path[i]]
 			steps += 1
-			if not z_steps and node[2] == 'Z':
-				z_steps = steps
-				z_node = node
-		if z_steps != steps - state[key]:
-			sys.exit(
-				f'{a_node}-{z_node} ({z_steps}) != '
-				f'{a_node}-{node}-{node} ({steps}) - '
-				f'{a_node}-{node} ({state[key]})!'
-			)
+		start = state[key]
+		cycle = steps - start
+		for (i, z_node), z_steps in state.items():
+			if z_node[2] != 'Z': continue
+			if z_steps >= start and z_steps % cycle == 0: break
+
+			a_to_znode = f'{a_node}-{z_node} ({z_steps})'
+			a_to_cycle = f'{a_node}-{node}-{node} ({steps})'
+			a_to_start = f'{a_node}-{node} ({start})'
+			if z_steps < start:
+				print(f'{a_to_znode} < {a_to_start}')
+			else:
+				print(f'{a_to_znode} != {a_to_cycle} - {a_to_start}')
+		else:
+			return None
 		total_steps *= z_steps // gcd(z_steps, total_steps)
 	return total_steps
 
