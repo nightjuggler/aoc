@@ -1,69 +1,67 @@
 import sys
 
 def read_input():
-	lines = []
-	start = None
-	for y, line in enumerate(sys.stdin):
-		line = line.rstrip()
-		if not line or line.strip('|-LJ7F.S'):
-			sys.exit(f'Input line {y+1} is not valid!')
-		x = line.find('S')
-		if x >= 0:
-			assert not start
-			start = x, y
-		lines.append(line)
-	if not lines:
-		sys.exit('No input!')
+	lines = [line.rstrip() for line in sys.stdin]
+	if any(not line or line.strip('|-LJ7F.S') for line in lines):
+		sys.exit('One or more input lines are empty or contain unexpected characters!')
+
+	start = [(x, y) for y, line in enumerate(lines)
+			for x, c in enumerate(line) if c == 'S']
+	if len(start) != 1:
+		sys.exit(f'The input contains {len(start)} starting positions!')
+
 	linelen = len(lines[0])
-	if not all(len(line) == linelen for line in lines):
-		sys.exit('Input lines not all of the same length!')
-	return start, lines
+	if any(len(line) != linelen for line in lines):
+		sys.exit('The input lines are not all of the same length!')
+
+	return start[0], lines
 
 def part1(start, lines):
 	north =  0, -1
 	south =  0,  1
 	east  =  1,  0
 	west  = -1,  0
-	pipe_dxdy = {
-		'|': (north, south),
-		'-': (east, west),
-		'L': (north, east),
-		'J': (north, west),
-		'7': (south, west),
-		'F': (south, east),
-		'.': ((0,0),),
-	}
 	opposite = {
 		north: south,
 		south: north,
 		east: west,
 		west: east,
 	}
+	pipe_dxdy = {}
+	dxdy_pipe = {}
+	for pipe, d1, d2 in (
+		('|', north, south),
+		('-', east, west),
+		('L', north, east),
+		('J', north, west),
+		('7', south, west),
+		('F', south, east),
+	):
+		pipe_dxdy[pipe, *opposite[d1]] = d2
+		pipe_dxdy[pipe, *opposite[d2]] = d1
+		dxdy_pipe[d1, d2] = pipe
+		dxdy_pipe[d2, d1] = pipe
+
 	ymax = len(lines)-1
 	xmax = len(lines[0])-1
 	x, y = start
-	start_dxdy = []
-	for x2, y2 in ((x+1,y), (x,y+1), (x-1,y), (x,y-1)):
-		if x2 < 0 or x2 > xmax: continue
-		if y2 < 0 or y2 > ymax: continue
-		for dx, dy in pipe_dxdy[lines[y2][x2]]:
-			if (x2+dx, y2+dy) == start:
-				start_dxdy.append(opposite[dx, dy])
-				break
-	del pipe_dxdy['.']
-	dxdy_pipe = {tuple(sorted(dxdy)): pipe for pipe, dxdy in pipe_dxdy.items()}
-	pipes = {start: dxdy_pipe[tuple(sorted(start_dxdy))]}
+	start_dxdy = tuple((dx, dy)
+		for dx, dy in (north, south, east, west)
+		if 0 <= (x2 := x+dx) <= xmax
+		if 0 <= (y2 := y+dy) <= ymax
+		if (lines[y2][x2], dx, dy) in pipe_dxdy)
+	if len(start_dxdy) != 2:
+		sys.exit('The starting position must connect to exactly two pipes!')
+
+	pipes = {start: dxdy_pipe[start_dxdy]}
 	dx, dy = start_dxdy[0]
-	xy = x+dx, y+dy
-	prev_xy = start
-	while xy != start:
-		x, y = xy
-		pipes[xy] = pipe = lines[y][x]
-		for dx, dy in pipe_dxdy[pipe]:
-			next_xy = x+dx, y+dy
-			if next_xy != prev_xy:
-				xy, prev_xy = next_xy, xy
-				break
+	x += dx
+	y += dy
+	while (x, y) != start:
+		pipes[x, y] = pipe = lines[y][x]
+		dx, dy = pipe_dxdy[pipe, dx, dy]
+		x += dx
+		y += dy
 	return pipes
 
 def part2(pipes):
