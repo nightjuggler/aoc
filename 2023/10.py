@@ -8,7 +8,7 @@ def read_input():
 	start = [(x, y) for y, line in enumerate(lines)
 			for x, c in enumerate(line) if c == 'S']
 	if len(start) != 1:
-		sys.exit(f'The input contains {len(start)} starting positions!')
+		sys.exit('The input must contain exactly one starting position!')
 
 	linelen = len(lines[0])
 	if any(len(line) != linelen for line in lines):
@@ -58,8 +58,11 @@ def part1(start, lines):
 	x += dx
 	y += dy
 	while (x, y) != start:
-		pipes[x, y] = pipe = lines[y][x]
-		dx, dy = pipe_dxdy[pipe, dx, dy]
+		try:
+			pipes[x, y] = pipe = lines[y][x]
+			dx, dy = pipe_dxdy[pipe, dx, dy]
+		except (IndexError, KeyError):
+			sys.exit(f'Loop broken at x={x}, y={y}!')
 		x += dx
 		y += dy
 	return pipes
