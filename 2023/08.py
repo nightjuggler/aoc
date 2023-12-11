@@ -44,19 +44,19 @@ def part2(path, graph):
 	total_steps = 1
 	for node in graph:
 		if node[2] != 'A': continue
-		steps = 0
-		state = {}
 		a_node = node
+		steps = 0
+		seen = {}
 		while True:
 			i = steps % pathlen
-			key = i, node
-			if key in state: break
-			state[key] = steps
+			state = i, node
+			if state in seen: break
+			seen[state] = steps
 			node = graph[node][path[i]]
 			steps += 1
-		start = state[key]
+		start = seen[state]
 		cycle = steps - start
-		for (i, z_node), z_steps in state.items():
+		for (i, z_node), z_steps in seen.items():
 			if z_node[2] != 'Z': continue
 			if z_steps >= start and z_steps % cycle == 0: break
 
