@@ -1,14 +1,8 @@
 import sys
 
 def expand(delta, coords):
-	num_empty = 0
-	coord_map = {}
-	prev_coord = -1
-	for coord in sorted(set(coords)):
-		num_empty += coord - prev_coord - 1
-		coord_map[coord] = coord + num_empty * delta
-		prev_coord = coord
-	return coord_map
+	return {coord: coord + (coord - i) * delta
+		for i, coord in enumerate(sorted(set(coords)))}
 
 def solve(galaxies, expansion):
 	xmap = expand(expansion-1, (x for x, y in galaxies))
