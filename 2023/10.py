@@ -65,33 +65,16 @@ def part2(pipes):
 	ys = sorted(y for x, y in pipes)
 	xrange = range(xs[0], xs[-1]+1)
 	yrange = range(ys[0], ys[-1]+1)
-	inout = {
-		(None, '-'): (None, True ),
-		( '7', '|'): ( '7', False),
-		( 'F', '|'): ( 'F', False),
-		(None, '7'): ( '7', False),
-		(None, 'F'): ( 'F', False),
-		( '7', 'L'): (None, True ),
-		( 'F', 'L'): (None, False),
-		( '7', 'J'): (None, False),
-		( 'F', 'J'): (None, True ),
-	}
-	prev = None
 	inside = False
 	num_inside = 0
 	for x in xrange:
 		for y in yrange:
 			pipe = pipes.get((x, y))
-			if not pipe:
-				assert not prev
-				if inside:
-					num_inside += 1
-			else:
-				prev, flip = inout[prev, pipe]
-				if flip:
+			if pipe:
+				if pipe in '-7J':
 					inside = not inside
-		assert not prev
-		assert not inside
+			elif inside:
+				num_inside += 1
 	return num_inside
 
 def main():
