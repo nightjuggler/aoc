@@ -21,12 +21,6 @@ def part1(start, lines):
 	south =  0,  1
 	east  =  1,  0
 	west  = -1,  0
-	opposite = {
-		north: south,
-		south: north,
-		east: west,
-		west: east,
-	}
 	pipe_dxdy = {}
 	dxdy_pipe = {}
 	for pipe, d1, d2 in (
@@ -37,10 +31,9 @@ def part1(start, lines):
 		('7', south, west),
 		('F', south, east),
 	):
-		pipe_dxdy[pipe, *opposite[d1]] = d2
-		pipe_dxdy[pipe, *opposite[d2]] = d1
+		pipe_dxdy[pipe, -d1[0], -d1[1]] = d2
+		pipe_dxdy[pipe, -d2[0], -d2[1]] = d1
 		dxdy_pipe[d1, d2] = pipe
-		dxdy_pipe[d2, d1] = pipe
 
 	ymax = len(lines)-1
 	xmax = len(lines[0])-1
@@ -102,8 +95,7 @@ def part2(pipes):
 	return num_inside
 
 def main():
-	start, lines = read_input()
-	pipes = part1(start, lines)
+	pipes = part1(*read_input())
 	print('Part 1:', len(pipes)//2)
 	print('Part 2:', part2(pipes))
 main()
