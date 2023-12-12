@@ -1,13 +1,10 @@
+from functools import cache
 import sys
 
-seen = {}
-
+@cache
 def recurse(springs, groups):
 	if not groups:
 		return '#' not in springs
-	state = springs, groups
-	if (result := seen.get(state)) is not None:
-		return result
 	n = len(springs)
 	m = sum(groups) + len(groups) - 1
 	j = groups[0]
@@ -19,7 +16,6 @@ def recurse(springs, groups):
 		if springs[i] == '#':
 			break
 		j += 1
-	seen[state] = result
 	return result
 
 def part1(data):
