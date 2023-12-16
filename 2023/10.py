@@ -65,6 +65,20 @@ def part2(pipes):
 	ys = sorted(y for x, y in pipes)
 	xrange = range(xs[0], xs[-1]+1)
 	yrange = range(ys[0], ys[-1]+1)
+	#
+	# A tile is inside the loop if the loop is crossed an odd number of times when going
+	# from outside the loop to the tile. Instead of counting, we can flip a flag (initially
+	# False) every time we cross the loop. When traversing a column top to bottom, the loop
+	# is crossed in three situations: when encountering (1) a '-', or (2) a '7' followed by
+	# an 'L', or (3) an 'F' followed by a 'J'. However, we can simply flip the flag whenever
+	# we see -, 7, or J (or -, F, and L) and ignore the other loop tiles. This is because
+	# every 7 must be followed by either a J or an L with only '|' in between, and every J
+	# must have been preceded by either a 7 or an F with only '|' in between. If 7 is followed
+	# by J, the flag will be flipped twice which is equivalent to not changing it at all.
+	# So the value of the flag (and thus whether the next non-loop tile is inside or outside)
+	# will effectively change for every 7|L and F|J (flag flipped once) but not for 7|J (flag
+	# flipped twice) or F|L (flag not flipped at all) which is exactly what we want.
+	#
 	inside = False
 	num_inside = 0
 	for x in xrange:
