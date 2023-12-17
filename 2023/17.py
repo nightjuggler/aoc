@@ -14,15 +14,15 @@ def part1(loss_map):
 	q = []
 	best = None
 	seen = set()
-	heappush(q, (0, (1, 0, 0, 1)))
-	heappush(q, (0, (0, 1, 1, 1)))
+	heappush(q, (0, 1, 0, 0, 1))
+	heappush(q, (0, 0, 1, 1, 1))
 	while q:
-		loss, state = heappop(q)
-		if state in seen: continue
-		seen.add(state)
-		x, y, direction, straight = state
+		loss, x, y, direction, straight = heappop(q)
 		if x < 0 or x > xmax: continue
 		if y < 0 or y > ymax: continue
+		state = x, y, direction, straight
+		if state in seen: continue
+		seen.add(state)
 		loss += loss_map[y][x]
 		if best and loss >= best: continue
 		if (x, y) == end:
@@ -30,10 +30,10 @@ def part1(loss_map):
 			continue
 		if straight < 3:
 			dx, dy = dxdy[direction]
-			heappush(q, (loss, (x+dx, y+dy, direction, straight+1)))
+			heappush(q, (loss, x+dx, y+dy, direction, straight+1))
 		for d in ((direction-1) % 4, (direction+1) % 4):
 			dx, dy = dxdy[d]
-			heappush(q, (loss, (x+dx, y+dy, d, 1)))
+			heappush(q, (loss, x+dx, y+dy, d, 1))
 	return best
 
 def part2(loss_map):
@@ -49,15 +49,15 @@ def part2(loss_map):
 	q = []
 	best = None
 	seen = set()
-	heappush(q, (sum(loss_map[0][x] for x in range(1, 4)), (4, 0, 0, 4)))
-	heappush(q, (sum(loss_map[y][0] for y in range(1, 4)), (0, 4, 1, 4)))
+	heappush(q, (sum(loss_map[0][x] for x in range(1, 4)), 4, 0, 0, 4))
+	heappush(q, (sum(loss_map[y][0] for y in range(1, 4)), 0, 4, 1, 4))
 	while q:
-		loss, state = heappop(q)
-		if state in seen: continue
-		seen.add(state)
-		x, y, direction, straight = state
+		loss, x, y, direction, straight = heappop(q)
 		if x < 0 or x > xmax: continue
 		if y < 0 or y > ymax: continue
+		state = x, y, direction, straight
+		if state in seen: continue
+		seen.add(state)
 		loss += loss_map[y][x]
 		if best and loss >= best: continue
 		if (x, y) == end:
@@ -65,7 +65,7 @@ def part2(loss_map):
 			continue
 		if straight < 10:
 			dx, dy = dxdy[direction]
-			heappush(q, (loss, (x+dx, y+dy, direction, straight+1)))
+			heappush(q, (loss, x+dx, y+dy, direction, straight+1))
 		for d in ((direction-1) % 4, (direction+1) % 4):
 			dx, dy = dxdy[d]
 			nx, ny, nloss = x, y, loss
@@ -76,7 +76,7 @@ def part2(loss_map):
 				if ny < 0 or ny > ymax: break
 				nloss += loss_map[ny][nx]
 			else:
-				heappush(q, (nloss, (nx+dx, ny+dy, d, 4)))
+				heappush(q, (nloss, nx+dx, ny+dy, d, 4))
 	return best
 
 def main(f, err):
