@@ -10,7 +10,6 @@ def solve(loss_map, min_moves, max_moves):
 	)
 	ymax = len(loss_map) - 1
 	xmax = len(loss_map[0]) - 1
-	end = xmax, ymax
 	moves = range(1, max_moves + 1)
 	q = []
 	best = None
@@ -34,7 +33,7 @@ def solve(loss_map, min_moves, max_moves):
 		state = x, y, d
 		if state in seen: continue
 		seen.add(state)
-		if (x, y) == end:
+		if x == xmax and y == ymax:
 			if best is None or loss < best: best = loss
 			continue
 		push(loss, x, y, (d-1) % 4)
