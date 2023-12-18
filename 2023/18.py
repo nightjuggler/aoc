@@ -46,22 +46,22 @@ def make_trench(plan, start_x, start_y):
 	assert x == start_x and y == start_y
 	return trench
 
-def part1(plan):
+def solve_uncompressed(plan):
 	trench = make_trench(plan, 0, 0)
 	xs = sorted(x for x, y in trench)
 	ys = sorted(y for x, y in trench)
 	xrange = range(xs[0], xs[-1]+1)
 	yrange = range(ys[0], ys[-1]+1)
+	num_points = len(trench)
 	inside = False
-	num_inside = 0
 	for x in xrange:
 		for y in yrange:
 			if (pipe := trench.get((x, y))):
 				if pipe in '-7J':
 					inside = not inside
 			elif inside:
-				num_inside += 1
-	return len(trench) + num_inside
+				num_points += 1
+	return num_points
 
 def coord_map(xs):
 	xs = sorted(set(xs))
@@ -101,24 +101,50 @@ def compress_plan(plan):
 
 	return xs, ys, make_trench(new_plan, xmap[0], ymap[0])
 
-def part2(plan):
-	trench_len = sum(m for d, m in plan)
+def solve_compressed(plan):
 	xs, ys, trench = compress_plan(plan)
 	xrange = range(len(xs))
 	yrange = range(len(ys))
+	num_points = sum(m for d, m in plan)
 	inside = False
-	num_inside = 0
 	for x in xrange:
 		for y in yrange:
 			if (pipe := trench.get((x, y))):
 				if pipe in '-7J':
 					inside = not inside
 			elif inside:
-				num_inside += (xs[x] - xs[x-1]) * (ys[y] - ys[y-1])
-	return trench_len + num_inside
+				num_points += (xs[x] - xs[x-1]) * (ys[y] - ys[y-1])
+	return num_points
+
+def solve_shoelace(plan):
+	#
+	# (1) Get the number of boundary points by adding up the distances
+	#     specified in the plan.
+	# (2) Use the shoelace formula to calculate the area of the polygon:
+	#     https://en.wikipedia.org/wiki/Shoelace_formula
+	# (3) Use Pick's theorem to get the number of interior points based
+	#     on (1) and (2): https://en.wikipedia.org/wiki/Pick's_theorem
+	# (4) Return the sum of (3) (the number of interior points) and (1)
+	#     (the number of boundary points).
+	#
+	area = 0
+	b = sum(m for d, m in plan)
+	x1 = y1 = 0
+	for d, m in plan:
+		dx, dy = dxdy[d]
+		x2 = x1 + dx * m
+		y2 = y1 + dy * m
+		area += x1*y2 - x2*y1
+		x1 = x2
+		y1 = y2
+	area = abs(area)//2
+	return area - b//2 + 1 + b
 
 def main():
 	plan1, plan2 = read_input()
-	print('Part 1:', part1(plan1))
-	print('Part 2:', part2(plan2))
+	print('Part 1:', solve_uncompressed(plan1), '(uncompressed)')
+	print('Part 1:', solve_compressed(plan1), '(compressed)')
+	print('Part 1:', solve_shoelace(plan1), '(shoelace)')
+	print('Part 2:', solve_compressed(plan2), '(compressed)')
+	print('Part 2:', solve_shoelace(plan2), '(shoelace)')
 main()
