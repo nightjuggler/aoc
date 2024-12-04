@@ -1,9 +1,8 @@
 import sys
 
 def part1(lines):
-	word = 'XMAS'
 	def count(line):
-		return line.count(word) + line[::-1].count(word)
+		return line.count('XMAS') + line.count('SAMX')
 	n = len(lines)
 	m = n - 1
 	result = sum(map(count, lines))
