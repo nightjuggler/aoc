@@ -57,8 +57,9 @@ def part2(diskmap):
 		if not size: continue
 		pos += fsize
 		spaces = space[size]
+		n = len(spaces)
 		i = 0
-		while pos > spaces[i]: i += 1
+		while i < n and pos > spaces[i]: i += 1
 		spaces.insert(i, pos)
 
 	return sum(i * sum(range(pos, pos + size)) for i, (pos, size) in enumerate(files))
@@ -67,4 +68,5 @@ def main():
 	diskmap = list(map(int, sys.stdin.read().strip()))
 	print('Part 1:', part1(diskmap))
 	print('Part 2:', part2(diskmap))
+
 main()
