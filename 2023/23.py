@@ -55,15 +55,15 @@ def connect(lines, next_xy):
 def solve(graph, end):
 	best = 0
 	q = deque()
-	q.append((0, 0, frozenset()))
+	q.append((0, 0, 0))
 	while q:
 		steps, node, seen = q.popleft()
 		if node == end:
 			if steps > best: best = steps
 			continue
-		seen = seen | {node}
+		seen |= 1<<node
 		for next_steps, next_node in graph[node]:
-			if next_node not in seen:
+			if not (seen & (1<<next_node)):
 				q.append((steps + next_steps, next_node, seen))
 	return best
 
