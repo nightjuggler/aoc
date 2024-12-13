@@ -15,54 +15,70 @@ def read_input():
 	assert all(not line.strip('#.<>^v') for line in lines)
 	return lines
 
+def prune(graph):
+	for node1, next_nodes in enumerate(graph):
+		remove = 0
+		for node2, steps in next_nodes:
+			seen = 1<<node1
+			q = deque()
+			q.append(node2)
+			while q:
+				node = q.popleft()
+				if node == 1: break
+				seen |= 1<<node
+				for node, steps in graph[node]:
+					if not (seen & (1<<node)): q.append(node)
+			else:
+				# Cannot reach the end node by going from node1 to node2
+				remove |= 1<<node2
+		if remove:
+			next_nodes[:] = [move for move in next_nodes if not (remove & (1<<move[0]))]
+	return graph
+
 def connect(lines, next_xy):
-	ymax = len(lines) - 1
-	xmax = len(lines[0]) - 2
-	q = deque()
-	nq = deque()
-	node, x, y = 0, 1, 0
-	nq.append((node, x, y))
-	xy_to_node = {(x, y): node}
-	graph = [None]
+	rows = [[None if c == '#' else [0] for c in line] for line in lines]
+	rows[0][1], rows[-1][-2] = graph = [[0, [rows[1][1]]], [1, []]]
 
-	while nq:
-		node, x, y = nq.popleft()
-		graph[node] = next_nodes = []
-		seen = set()
-		q.append((0, x, y))
-		while q:
-			steps, x, y = q.popleft()
-			if (x, y) in seen: continue
-			seen.add((x, y))
-			if y == 0:
-				q.append((steps+1, x, 1))
-				continue
-			if y != ymax:
-				nxy = [(nx, ny) for nx, ny in next_xy(x, y) if lines[ny][nx] != '#']
-				if not steps or len(nxy) <= 2:
-					q.extend((steps+1, nx, ny) for nx, ny in nxy)
-					continue
-			node = xy_to_node.get((x, y))
-			if not node:
-				xy_to_node[x, y] = node = len(graph)
-				graph.append(None)
-				if y != ymax:
-					nq.append((node, x, y))
-			next_nodes.append((steps, node))
+	for y, row in enumerate(rows[1:-1], start=1):
+		for x, trail in enumerate(row[1:-1], start=1):
+			if trail:
+				moves = [rows[ny][nx] for nx, ny in next_xy(x, y) if rows[ny][nx]]
+				trail.append(moves)
+				if len(moves) > 2:
+					trail[0] = len(graph)
+					graph.append(trail)
+	for trail in graph:
+		node, moves = trail
+		graph[node] = nodes = []
+		for trail2 in moves:
+			prev = trail
+			steps = 1
+			while True:
+				node, moves = trail2
+				if node:
+					nodes.append((node, steps))
+					break
+				if len(moves) == 1:
+					move1, = moves
+					if prev is move1: break
+					prev, trail2 = trail2, move1
+				else:
+					move1, move2 = moves
+					prev, trail2 = trail2, (move2 if prev is move1 else move1)
+				steps += 1
+	return prune(graph)
 
-	return graph, xy_to_node[xmax, ymax]
-
-def solve(graph, end):
+def solve(graph):
 	best = 0
 	q = deque()
 	q.append((0, 0, 0))
 	while q:
 		steps, node, seen = q.popleft()
-		if node == end:
+		if node == 1:
 			if steps > best: best = steps
 			continue
 		seen |= 1<<node
-		for next_steps, next_node in graph[node]:
+		for next_node, next_steps in graph[node]:
 			if not (seen & (1<<next_node)):
 				q.append((steps + next_steps, next_node, seen))
 	return best
@@ -81,6 +97,6 @@ def main():
 	def part2(x, y):
 		return (x+1,y), (x,y+1), (x-1,y), (x,y-1)
 
-	print('Part 1:', solve(*connect(lines, part1)))
-	print('Part 2:', solve(*connect(lines, part2)))
+	print('Part 1:', solve(connect(lines, part1)))
+	print('Part 2:', solve(connect(lines, part2)))
 main()
