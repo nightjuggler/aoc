@@ -62,7 +62,7 @@ def part2(robots, width, height, threshold):
 		print('f = step forward')
 		print('b = step backward')
 		while True:
-			command = input(f'Command? ')
+			command = input('Command? ')
 			if command in ('q', 'f', 'b'): break
 		if command == 'q': break
 		step_back = command == 'b'
