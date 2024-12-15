@@ -70,25 +70,26 @@ def move_x(grid, x, y, dx):
 	return True
 
 def move_y(grid, x, y, dy):
+	prev = []
 	boxes = {x}
 	tomove = []
 	while boxes:
-		tomove.append(boxes)
+		tomove.append((prev, boxes))
+		prev = boxes
 		boxes = set()
 		y += dy
 		row = grid[y]
-		for x in tomove[-1]:
+		for x in prev:
 			tile = row[x]
 			if not tile: continue
 			if tile == 1: return False
 			boxes.add(x)
 			boxes.add(x+1 if tile == 2 else x-1)
-	for i in range(len(tomove)-1, -1, -1):
+	for prev, boxes in reversed(tomove):
 		row2 = row
 		y -= dy
 		row = grid[y]
-		prev = tomove[i-1] if i else []
-		for x in tomove[i]:
+		for x in boxes:
 			row2[x] = row[x]
 			if x not in prev: row[x] = 0
 	return True
