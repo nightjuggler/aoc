@@ -1,4 +1,5 @@
-from collections import defaultdict, deque
+from collections import defaultdict
+from heapq import heappop, heappush
 import sys
 
 def read_input():
@@ -8,34 +9,35 @@ def read_input():
 	assert not any(grid[0])
 	assert not any(grid[-1])
 	assert all(row[0] == 0 == row[-1] for row in grid)
-	(st,sx,sy), (et,ex,ey) = sorted((tile, x, y)
-		for y, row in enumerate(grid)
-		for x, tile in enumerate(row) if tile >= 2)
-	assert st == 2 and et == 3
-	return grid, sx, sy, (ex, ey)
+	assert grid[-2][1] == 2 # Start
+	assert grid[1][-2] == 3 # End
+	return grid
 
 def main():
-	grid, x, y, end = read_input()
+	grid = read_input()
+	size = len(grid)
+	x, y = 1, size-2
+	end = size-2, 1
 	paths = defaultdict(set)
 	best = None
-	seen = {}
-	q = deque()
-	q.append((0, x, y, 1, 0, ((x, y),)))
+	seen = [1<<24]*(size*size*4)
+	q = []
+	heappush(q, (0, x, y, 1, 0, (y*size+x,)))
 	while q:
-		score, x, y, dx, dy, path = q.popleft()
+		score, x, y, dx, dy, path = heappop(q)
 		if (x, y) == end:
 			if best is None or score < best: best = score
 			paths[score].update(path)
 			continue
-		key = x, y, dx, dy
-		if key in seen and score > seen[key]: continue
+		key = (y*size+x)*4 + (3*(dx+1)+dy)//2
+		if score > seen[key]: continue
 		seen[key] = score
-		q.append((score + 1000, x, y, dy, -dx, path)) # turn left
-		q.append((score + 1000, x, y, -dy, dx, path)) # turn right
+		heappush(q, (score + 1000, x, y, dy, -dx, path)) # turn left
+		heappush(q, (score + 1000, x, y, -dy, dx, path)) # turn right
 		x += dx
 		y += dy
 		if grid[y][x]:
-			q.append((score + 1, x, y, dx, dy, path + ((x, y),)))
+			heappush(q, (score + 1, x, y, dx, dy, path + (y*size+x,)))
 	print('Part 1:', best)
 	print('Part 2:', len(paths[best]))
 
