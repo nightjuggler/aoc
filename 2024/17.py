@@ -22,7 +22,7 @@ def format_regs(regs):
 def format_nums(label, nums):
 	return f'{label}: {",".join(map(str, nums))}'
 
-def part1(regs, prog):
+def run(regs, prog):
 	def adv(arg): regs[0] >>= arg if arg < 4 else regs[arg-4]
 	def bdv(arg): regs[1] = regs[0] >> (arg if arg < 4 else regs[arg-4])
 	def cdv(arg): regs[2] = regs[0] >> (arg if arg < 4 else regs[arg-4])
@@ -30,8 +30,6 @@ def part1(regs, prog):
 	def bxc(arg): regs[1] ^= regs[2]
 	def bst(arg): regs[1] = arg if arg < 4 else regs[arg-4] % 8
 	def out(arg): output.append(arg if arg < 4 else regs[arg-4] % 8)
-
-	print('Part 1:', format_regs(regs), format_nums('Program', prog), '=>', end=' ')
 
 	code = adv, bxl, bst, None, bxc, out, bdv, cdv
 	output = []
@@ -45,7 +43,11 @@ def part1(regs, prog):
 		else:
 			code[op](arg)
 		i += 2
+	return output
 
+def part1(regs, prog):
+	print('Part 1:', format_regs(regs), format_nums('Program', prog), '=>', end=' ')
+	output = run(regs, prog)
 	print(format_regs(regs), format_nums('Output', output))
 
 def part2(prog):
@@ -73,8 +75,9 @@ def part2(prog):
 	code = adv, bxl, bst, None, bxc, None, bdv, cdv
 	source = [code[op](prog[2*i+1]) for i, op in enumerate(prog[:-4:2])]
 	source = '\n\t\t\t\t'.join(source)
-	exec(f"""
-def solve(prog):
+	exec_namespace = {}
+
+	exec(f"""def solve(prog):
 	start_a = 0
 	for i in range(len(prog)-1, -1, -1):
 		start_a <<= {a_shift}
@@ -86,9 +89,11 @@ def solve(prog):
 			else:
 				break
 			start_a += 1
-	return start_a
-print('Part 2:', solve(prog))
-""")
+	return start_a\n""", None, exec_namespace)
+
+	a = exec_namespace['solve'](prog)
+	assert run([a,0,0], prog) == prog
+	print('Part 2:', a)
 
 def main():
 	print('==== Part 1 Inline Examples ====')
