@@ -26,9 +26,10 @@ def main():
 	while q:
 		score, x, y, dx, dy, path = heappop(q)
 		if (x, y) == end:
-			if best is None or score < best: best = score
 			paths[score].update(path)
+			best = min(paths)
 			continue
+		if best and score >= best: continue
 		key = (y*size+x)*4 + (3*(dx+1)+dy)//2
 		if score > seen[key]: continue
 		seen[key] = score
