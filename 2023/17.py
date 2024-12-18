@@ -24,7 +24,6 @@ def solve(loss_map, min_moves, max_moves):
 			if y < 0 or y > ymax: break
 			loss += loss_map[y][x]
 			if move >= min_moves:
-				if best and loss >= best: break
 				heappush(q, (loss, x, y, d))
 	push(0, 0, 0, 0)
 	push(0, 0, 0, 1)
@@ -34,8 +33,8 @@ def solve(loss_map, min_moves, max_moves):
 		if state in seen: continue
 		seen.add(state)
 		if x == xmax and y == ymax:
-			if best is None or loss < best: best = loss
-			continue
+			best = loss
+			break
 		push(loss, x, y, (d-1) % 4)
 		push(loss, x, y, (d+1) % 4)
 	return best
