@@ -2,41 +2,38 @@ import argparse
 from heapq import heappop, heappush
 
 def part1(blocked, max_xy):
-	size = max_xy + 1
-	seen = [False]*(size*size)
 	q = []
-	heappush(q, (0, 0, 0))
+	heappush(q, (0, max_xy, max_xy))
 	while q:
 		steps, x, y = heappop(q)
-		if x == max_xy == y: return steps
-		key = y*size + x
-		if seen[key]: continue
-		seen[key] = True
+		if not (x or y): return steps
+		if blocked[y][x]: continue
+		blocked[y][x] = True
 		steps += 1
-		if x and not blocked[y][x-1]: heappush(q, (steps, x-1, y))
-		if y and not blocked[y-1][x]: heappush(q, (steps, x, y-1))
-		if x < max_xy and not blocked[y][x+1]: heappush(q, (steps, x+1, y))
-		if y < max_xy and not blocked[y+1][x]: heappush(q, (steps, x, y+1))
+		if x: heappush(q, (steps, x-1, y))
+		if y: heappush(q, (steps, x, y-1))
+		if x < max_xy: heappush(q, (steps, x+1, y))
+		if y < max_xy: heappush(q, (steps, x, y+1))
 	return None
 
 def part2(blocked, max_xy, remaining):
 	size = max_xy + 1
+	start = size*size - 1
 	for bx, by in remaining:
 		blocked[by][bx] = True
-		seen = [False]*(size*size)
+		seen = [False]*(start+1)
 		q = []
-		heappush(q, (0, 0, 0))
+		heappush(q, start)
 		while q:
-			steps, x, y = heappop(q)
-			if x == max_xy == y: break
-			key = y*size + x
-			if seen[key]: continue
-			seen[key] = True
-			steps += 1
-			if x and not blocked[y][x-1]: heappush(q, (steps, x-1, y))
-			if y and not blocked[y-1][x]: heappush(q, (steps, x, y-1))
-			if x < max_xy and not blocked[y][x+1]: heappush(q, (steps, x+1, y))
-			if y < max_xy and not blocked[y+1][x]: heappush(q, (steps, x, y+1))
+			xy = heappop(q)
+			if not xy: break
+			if seen[xy]: continue
+			seen[xy] = True
+			y, x = divmod(xy, size)
+			if x and not blocked[y][x-1]: heappush(q, y*size + x-1)
+			if y and not blocked[y-1][x]: heappush(q, (y-1)*size + x)
+			if x < max_xy and not blocked[y][x+1]: heappush(q, y*size + x+1)
+			if y < max_xy and not blocked[y+1][x]: heappush(q, (y+1)*size + x)
 		else:
 			return f'{bx},{by}'
 	return None
@@ -54,7 +51,7 @@ def main():
 	for x, y in coords[:num_bytes]:
 		blocked[y][x] = True
 
-	print('Part 1:', part1(blocked, max_xy))
+	print('Part 1:', part1([row.copy() for row in blocked], max_xy))
 	print('Part 2:', part2(blocked, max_xy, coords[num_bytes:]))
 
 main()
