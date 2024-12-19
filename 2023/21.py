@@ -60,7 +60,6 @@ def part2(steps, seen, size):
 	assert len(delta) == 1
 	delta = delta.pop()
 	assert delta % 2
-	assert delta == size
 
 	num_plots = 0
 	# The core and the axes
@@ -85,9 +84,39 @@ def part2(steps, seen, size):
 	for q, count in quads.items():
 		d = steps - q
 		if d < 0: continue
+
+		# For the following, delta is expected to be odd.
+		# For an example, consider the top-left quadrant:
+		#
+		# The plots that are reachable are indicated by 1's
+		#
+		# Case 1: d is odd             Case 2: d is even
+		# ----------------             -----------------
+		#           0                            1
+		#          01                           10
+		#         010                          101
+		#        0101                         1010
+		#       01010                        10101
+		#      010101                       101010
+		#     0101010                      1010101
+		#
+		# The width of the bottom row (and the height of the rightmost column)
+		# is given by 1 + dd where dd = d//delta. In this example, dd = 6.
+		# The number of plots reachable in the bottom row (or rightmost column)
+		# is 1 + dd//2 if d is even. The total number of plots reachable in the
+		# quadrant is then simply this number squared. If d is odd, this number
+		# must then be either added if dd is odd or subtracted if dd is even.
+
 		dd = d//delta
-		loops = 1 + dd//2
-		plots = loops*(2 + dd - loops - ((d%2)^(dd%2)))
+		plots = 1 + dd//2
+		plots *= plots + (d%2)*(2*(dd%2)-1)
+
+		# The above expression for plots is simply a more succinct version of the following:
+		#	if d % 2:
+		#		plots *= plots+1 if dd % 2 else plots-1
+		#	else:
+		#		plots *= plots
+
 		num_plots += count * plots
 
 	return num_plots
