@@ -1,4 +1,5 @@
-from collections import defaultdict, deque
+from collections import defaultdict
+from heapq import heappop, heappush
 import re
 import sys
 
@@ -23,24 +24,26 @@ def part1(nodes):
 	return sum(any(node[0] == 't' for node in group) for group in threes)
 
 def part2(nodes):
-	q = deque()
+	q = []
 	best = 0
 	best_groups = []
 	seen = set()
 	for node, conn in nodes.items():
-		q.append((frozenset({node}), conn))
+		heappush(q, (-1, frozenset({node}), conn))
 		while q:
-			group, conn = q.popleft()
+			size, group, conn = heappop(q)
 			if group in seen: continue
 			seen.add(group)
-			size = len(group)
+			size = -size
+			if size + len(conn) < best: continue
 			if size > best:
 				best = size
 				best_groups = [group]
 			elif size == best:
 				best_groups.append(group)
+			size = -(size + 1)
 			for node in conn:
-				q.append((group | {node}, conn & nodes[node]))
+				heappush(q, (size, group | {node}, conn & nodes[node]))
 	assert len(best_groups) == 1
 	return ','.join(sorted(best_groups[0]))
 
@@ -48,5 +51,4 @@ def main():
 	nodes = read_input()
 	print('Part 1:', part1(nodes))
 	print('Part 2:', part2(nodes))
-
 main()
