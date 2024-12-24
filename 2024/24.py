@@ -69,15 +69,17 @@ def part2(wires):
 		wrong.add(out1)
 		wrong.add(out2)
 
-	def adder(wire, check_z=False):
+	def add(wire, check_z=False):
+		if len(wires[wire]) != 2:
+			sys.exit(f'Expected {wire} to be the input to exactly two gates!')
 		g1, g2 = wires[wire]
-		if wire[0] == 'x':
-			assert g1[0] == g2[0] == 'y' + wire[1:]
-		else:
-			assert g1[0] == g2[0] == overflow1[2]
+		wire2 = 'y' + wire[1:] if wire[0] == 'x' else overflow1[2]
+		if not g1[0] == g2[0] == wire2:
+			sys.exit(f'Expected {wire} to be the input to two gates with {wire2}!')
 		if (g1[1], g2[1]) != ('XOR', 'AND'):
 			g1, g2 = g2, g1
-			assert (g1[1], g2[1]) == ('XOR', 'AND')
+			if (g1[1], g2[1]) != ('XOR', 'AND'):
+				sys.exit(f'Expected {wire} to be the input to an XOR and an AND gate!')
 		if check_z:
 			z = 'z' + check_z[1:]
 			if g1[2] != z: fix(g1[2], z)
@@ -86,21 +88,24 @@ def part2(wires):
 
 	xs = numbered_wires(wires, 'x')
 	x = xs.pop(0)
-	overflow1 = adder(x, x)
+	overflow1 = add(x, x)
 
 	for x in xs:
-		xor, overflow2 = adder(x)
-		if len(wires[xor[2]]) == 1:
-			fix(xor[2], wires[overflow1[2]][0][0])
+		xor, overflow2 = add(x)
+		if len(wires[xor[2]]) != 2:
+			if wires[overflow1[2]]:
+				fix(xor[2], wires[overflow1[2]][0][0])
 
-		overflow1 = adder(xor[2], x)
-		if len(wires[overflow2[2]]) == 2:
-			fix(overflow2[2], wires[overflow1[2]][0][0])
+		overflow1 = add(xor[2], x)
+		if len(wires[overflow2[2]]) != 1:
+			if wires[overflow1[2]]:
+				fix(overflow2[2], wires[overflow1[2]][0][0])
+			if len(wires[overflow2[2]]) != 1:
+				sys.exit(f'Expected {overflow2[2]} to be the input to exactly one gate!')
 
-		overflow2, = wires[overflow2[2]]
-		assert overflow2[1] == 'OR'
-		assert overflow2[0] == overflow1[2]
-		overflow1 = overflow2
+		if wires[overflow2[2]][0][:2] != [overflow1[2], 'OR']:
+			sys.exit(f'Expected {overflow2[2]} to be the input to an OR gate with {overflow1[2]}!')
+		overflow1 = wires[overflow2[2]][0]
 
 	z = f'z{len(xs)+1:02}'
 	if overflow1[2] != z: fix(overflow1[2], z)
