@@ -77,17 +77,18 @@ def part1(modules, states, conj):
 
 def split_input(modules):
 	parts = []
-	for first in modules['broadcaster']:
-		seen = {'rx'}
+	modules['rx'] = []
+	for start in modules['broadcaster']:
+		nodes = set()
 		q = deque()
-		q.append(first)
+		q.append(start)
 		while q:
 			node = q.popleft()
-			if node in seen: continue
-			seen.add(node)
+			if node in nodes: continue
+			nodes.add(node)
 			q.extend(modules[node])
-		seen.remove('rx')
-		parts.append((first, seen))
+		nodes.remove('rx')
+		parts.append((start, nodes))
 	return parts
 
 def part2(modules, states, conj, output):
