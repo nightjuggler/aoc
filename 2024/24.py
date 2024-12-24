@@ -23,8 +23,8 @@ def read_input(f):
 		if not (m := pattern2.match(line)):
 			sys.exit(f'Line {line_num} doesn\'t match pattern!')
 		in1, op, in2, out = m.groups()
-		wires[in1].append((in2, op, out))
-		wires[in2].append((in1, op, out))
+		wires[in1].append([in2, op, out])
+		wires[in2].append([in1, op, out])
 	return ready, wires
 
 def numbered_wires(wires, x):
@@ -55,21 +55,34 @@ def part1(ready, wires):
 
 def part2(wires):
 	wrong = set()
+	lookup = defaultdict(list)
+	for gates in wires.values():
+		for gate in gates:
+			lookup[gate[2]].append(gate)
+
+	def fix(out1, out2):
+		print('Swap', out1, 'with', out2)
+		for gate in lookup[out1]: gate[2] = out2
+		for gate in lookup[out2]: gate[2] = out1
+		del lookup[out1]
+		del lookup[out2]
+		wrong.add(out1)
+		wrong.add(out2)
 
 	def adder(wire, check_z=False):
-		(in1, op1, out1), (in2, op2, out2) = wires[wire]
+		g1, g2 = wires[wire]
 		if wire[0] == 'x':
-			assert in1 == in2 == 'y' + wire[1:]
-		if (op1, op2) != ('XOR', 'AND'):
-			assert (op2, op1) == ('XOR', 'AND')
-			out1, out2 = out2, out1
+			assert g1[0] == g2[0] == 'y' + wire[1:]
+		else:
+			assert g1[0] == g2[0] == overflow1[2]
+		if (g1[1], g2[1]) != ('XOR', 'AND'):
+			g1, g2 = g2, g1
+			assert (g1[1], g2[1]) == ('XOR', 'AND')
 		if check_z:
 			z = 'z' + check_z[1:]
-			if out1 != z:
-				wrong.add(out1)
-				wrong.add(z)
-			return out2
-		return out1, out2
+			if g1[2] != z: fix(g1[2], z)
+			return g2
+		return g1, g2
 
 	xs = numbered_wires(wires, 'x')
 	x = xs.pop(0)
@@ -77,25 +90,20 @@ def part2(wires):
 
 	for x in xs:
 		xor, overflow2 = adder(x)
+		if len(wires[xor[2]]) == 1:
+			fix(xor[2], wires[overflow1[2]][0][0])
 
-		if len(wires[xor]) != 2:
-			wrong.add(xor)
-			xor = overflow1
+		overflow1 = adder(xor[2], x)
+		if len(wires[overflow2[2]]) == 2:
+			fix(overflow2[2], wires[overflow1[2]][0][0])
 
-		overflow1 = adder(xor, x)
-
-		gates = wires[overflow2]
-		if len(gates) != 1:
-			wrong.add(overflow2)
-			gates = wires[overflow1]
-
-		(in1, op1, overflow1), = gates
-		assert op1 == 'OR'
+		overflow2, = wires[overflow2[2]]
+		assert overflow2[1] == 'OR'
+		assert overflow2[0] == overflow1[2]
+		overflow1 = overflow2
 
 	z = f'z{len(xs)+1:02}'
-	if overflow1 != z:
-		wrong.add(overflow1)
-		wrong.add(z)
+	if overflow1[2] != z: fix(overflow1[2], z)
 
 	return ','.join(sorted(wrong))
 
