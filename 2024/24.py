@@ -35,10 +35,10 @@ def read_input(f):
 
 def numbered_wires(wires, x):
 	wires = sorted(wire for wire in wires if wire[0] == x)
-	if not all(wire == f'{x}{i:02}' for i, wire in enumerate(wires)):
-		err(f'The wires beginning with {x} are not numbered correctly!')
 	if not wires:
 		err(f'There are no wires beginning with {x}!')
+	if not all(wire == f'{x}{i:02}' for i, wire in enumerate(wires)):
+		err(f'The wires beginning with {x} are not numbered correctly!')
 	return wires
 
 def part1(ready, wires):
