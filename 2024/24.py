@@ -128,13 +128,11 @@ def main():
 		print(e)
 		return
 	try:
-		result = part1(ready, wires)
+		print('Part 1:', part1(ready, wires))
 	except PuzzleError as e:
-		result = str(e)
-	print('Part 1:', result)
+		print('Part 1:', e)
 	try:
-		result = part2(wires)
+		print('Part 2:', part2(wires))
 	except PuzzleError as e:
-		result = str(e)
-	print('Part 2:', result)
+		print('Part 2:', e)
 main()
