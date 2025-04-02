@@ -72,10 +72,8 @@ def part2(wires):
 
 	def fix(out1, out2):
 		print('Swap', out1, 'with', out2)
-		for gate in lookup[out1]: gate[2] = out2
-		for gate in lookup[out2]: gate[2] = out1
-		del lookup[out1]
-		del lookup[out2]
+		for gate in lookup.pop(out1): gate[2] = out2
+		for gate in lookup.pop(out2): gate[2] = out1
 		wrong.add(out1)
 		wrong.add(out2)
 		return out2

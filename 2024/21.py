@@ -4,8 +4,7 @@ def make_lookup(*rows):
 	keypad = {key: (x, y)
 		for y, row in enumerate(rows)
 		for x, key in enumerate(row)}
-	gap = keypad['_']
-	del keypad['_']
+	gap = keypad.pop('_')
 	lookup = {}
 	for key1, (x1, y1) in keypad.items():
 		for key2, (x2, y2) in keypad.items():
