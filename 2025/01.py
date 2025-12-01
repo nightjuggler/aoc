@@ -8,17 +8,16 @@ def part1(rots):
 def part2(rots):
 	dial = 50
 	password = 0
+	flipped = False
 	for n in rots:
-		if n < 0:
-			d, n = divmod(-n, 100)
-			password += d + (n >= dial > 0)
-			dial -= n
+		if (left := n < 0): n = -n
+		if left != flipped:
+			if dial: dial = 100 - dial
+			flipped = left
+		dial += n
+		if dial > 99:
+			password += dial // 100
 			dial %= 100
-		else:
-			dial += n
-			if dial > 99:
-				password += dial // 100
-				dial %= 100
 	return password
 
 def main(f):
