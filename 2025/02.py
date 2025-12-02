@@ -66,7 +66,7 @@ def main(f):
 	line = f.readline().strip()
 	n = '[1-9][0-9]*'
 	if not re.fullmatch(f'{n}-{n}(?:,{n}-{n})*', line):
-		return f'The input doesn\'t match the expected pattern!'
+		return 'The input doesn\'t match the expected pattern!'
 	ranges = []
 	for r in line.split(','):
 		first, last = r.split('-')
