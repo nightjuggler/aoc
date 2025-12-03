@@ -54,6 +54,11 @@ def part2(ranges):
 		result += sum(seen)
 	return result
 
+def part1_str(ranges):
+	return sum(n for r in ranges for n in r if (s:=str(n))[:(i:=len(s)//2)] == s[i:])
+def part2_str(ranges):
+	return sum(n for r in ranges for n in r if (s:=str(n)) in (s+s)[1:-1])
+
 def solve_re(ranges, pattern):
 	pattern = re.compile(pattern)
 	return sum(n for r in ranges for n in r if pattern.fullmatch(str(n)))
@@ -61,6 +66,7 @@ def solve_re(ranges, pattern):
 def main(f):
 	args = argparse.ArgumentParser(allow_abbrev=False)
 	args.add_argument('-r', '--re', action='store_true')
+	args.add_argument('-s', '--str', action='store_true')
 	args = args.parse_args()
 
 	line = f.readline().strip()
@@ -74,6 +80,9 @@ def main(f):
 	if args.re:
 		print('Part 1:', solve_re(ranges, fr'({n})\1'))
 		print('Part 2:', solve_re(ranges, fr'({n})\1+'))
+	elif args.str:
+		print('Part 1:', part1_str(ranges))
+		print('Part 2:', part2_str(ranges))
 	else:
 		print('Part 1:', part1(ranges))
 		print('Part 2:', part2(ranges))
