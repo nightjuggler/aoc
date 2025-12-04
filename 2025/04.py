@@ -30,7 +30,7 @@ def solve_v2(rows): # ~350ms
 	while discard := set(filter(removable, rolls)): rolls -= discard
 	print('Part 2:', num_rolls - len(rolls))
 
-def solve_v3(rows): # ~100ms
+def solve_v3(rows): # ~90ms
 	size = len(rows) + 2
 	offsets = -size-1, -size, -size+1, -1, 1, size-1, size, size+1
 	rolls = set(y*size + x
@@ -51,7 +51,7 @@ def solve_v3(rows): # ~100ms
 			print('Part 1:', len(discard))
 		if not discard: break
 		rolls -= discard
-		check = touched
+		check = touched - discard
 	print('Part 2:', num_rolls - len(rolls))
 
 def main():
