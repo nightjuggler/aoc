@@ -13,7 +13,7 @@ def main(lines):
 	fresh = prev_b = 0
 	for a, b in sorted(ranges):
 		if b > prev_b:
-			fresh += b - (prev_b if prev_b > a else a)
+			fresh += b - max(a, prev_b)
 			prev_b = b
 	print('Part 2:', fresh)
 
