@@ -13,16 +13,16 @@ def main():
 	discard = [(pos, adj) for pos, adj in rolls.items() if len(adj) < 4]
 	print('Part 1:', len(discard))
 
-	num_rolls = len(rolls)
+	removed = 0
 	while discard:
 		todo = []
 		for pos, adj in discard:
-			del rolls[pos]
 			for pos2 in adj:
 				adj2 = rolls[pos2]
 				adj2.remove(pos)
 				if len(adj2) == 3:
 					todo.append((pos2, adj2))
+		removed += len(discard)
 		discard = todo
-	print('Part 2:', num_rolls - len(rolls))
+	print('Part 2:', removed)
 main()
