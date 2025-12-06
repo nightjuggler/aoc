@@ -1,32 +1,23 @@
 from math import prod
 import sys
 
-def opfn(op):
-	if op == '+': return sum
-	assert op == '*'
-	return prod
+opfn = {'+': sum, '*': prod}
 
 def part1(lines):
 	lines = [line.split() for line in lines]
-	return sum(opfn(args[-1])(map(int, args[:-1])) for args in zip(*lines))
+	return sum(opfn[args[-1]](map(int, args[:-1])) for args in zip(*lines))
 
 def part2(lines):
-	result = 0
-	op = None
-	nums = []
-	for col in map(''.join, zip(*lines)):
-		if not col.strip():
-			result += op(nums)
-			op = None
-			nums = []
-		elif col[-1] == ' ':
-			nums.append(int(col))
+	ops = lines.pop().split()
+	problems = []
+	numbers = []
+	for col in zip(*lines):
+		if col := ''.join(col).strip():
+			numbers.append(int(col))
 		else:
-			assert not op
-			op = opfn(col[-1])
-			nums.append(int(col[:-1]))
-	assert not (op or nums)
-	return result
+			problems.append(numbers)
+			numbers = []
+	return sum(opfn[op](numbers) for op, numbers in zip(ops, problems))
 
 def main():
 	lines = list(sys.stdin)
