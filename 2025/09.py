@@ -28,13 +28,11 @@ def main():
 	for y, row in zip(ys, grid):
 		for x1, x2 in horz[y]:
 			x1 = xs[x1]
-			x2 = xs[x2]
-			row[x1:x2+1] = [True] * (x2+1-x1)
+			x2 = xs[x2] + 1
+			row[x1:x2] = [True] * (x2-x1)
 	for x, col in xs.items():
 		for y1, y2 in vert[x]:
-			y1 = ys[y1]
-			y2 = ys[y2]
-			for row in range(y1, y2+1):
+			for row in range(ys[y1], ys[y2]+1):
 				grid[row][col] = True
 	for row in grid:
 		inside = onside = False
@@ -46,13 +44,14 @@ def main():
 			else:
 				if inside: row[x] = True
 				onside = False
+	tiles = [(xs[x], ys[y]) for x, y in tiles]
 	for area, i, j in areas:
 		x1, y1 = tiles[i]
 		x2, y2 = tiles[j]
-		if x1 > x2: x1,x2=x2,x1
-		if y1 > y2: y1,y2=y2,y1
-		y_range = range(ys[y1], ys[y2]+1)
-		x_range = slice(xs[x1], xs[x2]+1)
+		if x1 > x2: x1,x2 = x2,x1
+		if y1 > y2: y1,y2 = y2,y1
+		y_range = range(y1, y2+1)
+		x_range = slice(x1, x2+1)
 		if all(all(grid[y][x_range]) for y in y_range):
 			print('Part 2:', area)
 			break
