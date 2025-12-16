@@ -1,3 +1,4 @@
+from itertools import combinations
 import operator
 import re
 import sys
@@ -39,10 +40,11 @@ def solve2_scipy(machine, full_result=False):
 	return result if full_result else round(sum(result.x)) if result.success else None
 
 def rowstr(row):
-	return f'[{','.join(f'{x:3}' for x in row[:-1])}] = {row[-1]}'
+	return f'[{','.join(f'{n:3}' for n in row)}]'
 
-def print_result(x):
-	print(f'[{','.join(f'{n:3}' for n in x)}] => {sum(x)}')
+def print_matrix(matrix):
+	for row in matrix:
+		print(rowstr(row[:-1]), '=', row[-1])
 
 def reduce_matrix(matrix): # Gaussian elimination (aka row reduction)
 	num_rows = len(matrix)
@@ -84,8 +86,7 @@ def reduce_matrix(matrix): # Gaussian elimination (aka row reduction)
 
 		matrix[y+1:] = sorted(matrix[y+1:], reverse=True)
 
-	while matrix:
-		if any(matrix[-1]): break
+	while matrix and not any(matrix[-1]):
 		matrix.pop()
 
 def gen_values(max_values, sum_values=0):
@@ -97,7 +98,7 @@ def gen_values(max_values, sum_values=0):
 		current_set = set()
 		for i, max_value in enumerate(max_values):
 			for previous in previous_set:
-				if previous[i] == max_value: continue
+				if max_value(previous): continue
 				values = list(previous)
 				values[i] += 1
 				values = tuple(values)
@@ -106,38 +107,86 @@ def gen_values(max_values, sum_values=0):
 					current_set.add(values)
 		previous_set = current_set
 
-def make_table(matrix, max_presses):
+def get_max_value1(max_value):
+	def g(values):
+		return values[0] == max_value
+	return g
+
+def get_sum_values(get_items):
+	def g(values):
+		return sum(get_items(values))
+	return g
+
+def get_max_value2_closure(max_values):
+	def g(values):
+		return any(get_value(values) == max_value for max_value, get_value in max_values)
+	return g
+
+def get_max_value2(table_row):
+	combo_sets = []
+	max_values = []
+#	printable = []
+	for max_value, k, combo in sorted(table_row):
+		combo = set(combo)
+		if any(map(combo.issubset, combo_sets)): continue
+		combo_sets.append(combo)
+		get_value = operator.itemgetter(*combo)
+		if k < -1: get_value = get_sum_values(get_value)
+		max_values.append((max_value, get_value))
+#		printable.append((max_value, combo))
+#	print(printable)
+	return get_max_value2_closure(max_values)
+
+def get_max_values(indices, buttons, joltages, max_presses):
+	n = len(indices)
+	if n == 1:
+		return [get_max_value1(max_presses[indices[0]])]
+
+	table = [[(max_presses[b], -1, (i,))] for i, b in enumerate(indices)]
+
+	for k in range(2, n+1):
+		for combo in combinations(range(n), k):
+			x = set(buttons[indices[combo[0]]])
+			for i in combo[1:]:
+				x.intersection_update(buttons[indices[i]])
+			if not x: continue
+			max_value = min(joltages[i] for i in x)
+			if max_value >= sum(max_presses[indices[i]] for i in combo): continue
+			item = max_value, -k, combo
+			for i in combo:
+				table[i].append(item)
+
+	return list(map(get_max_value2, table))
+
+def make_table(matrix, buttons, joltages, max_presses):
 	table = []
-	num_cols = len(max_presses)
-	fixed = [False]*num_cols
-	indices = []
+	fixed_indices = []
+	free_indices = set(range(len(buttons)))
 
 	for row in matrix[::-1]:
-		rhs = row[-1]
-		fixed_entries = [row[i] for i in indices]
-		entries = []
-		max_values = []
-		for i in range(num_cols):
-			if not fixed[i] and row[i]:
-				indices.append(i)
-				entries.append(row[i])
-				max_values.append(max_presses[i])
-				fixed[i] = True
+		indices = [i for i in sorted(free_indices) if row[i]]
+		entries = [row[i] for i in indices]
 		lead = entries[0] if entries else 0
 		can_break = lead > 0 and all(a == lead for a in entries)
-		table.append((can_break, entries, max_values, fixed_entries, rhs))
 
-	return table[::-1], {j: i for i, j in enumerate(indices)}
+		table.append((row[-1], [row[i] for i in fixed_indices], entries, can_break,
+			get_max_values(indices, buttons, joltages, max_presses)))
+		fixed_indices.extend(indices)
+		free_indices.difference_update(indices)
 
-def solve_matrix(matrix, x_max):
+	return table[::-1], {j: i for i, j in enumerate(fixed_indices)}
+
+def solve_matrix(matrix, buttons, joltages):
+	max_presses = [min(joltages[i] for i in b) for b in buttons]
+	table, index_map = make_table(matrix, buttons, joltages, max_presses)
+
 	best = []
-	best_sum = sum(x_max) + 1
-	table, index_map = make_table(matrix, x_max)
+	best_sum = sum(max_presses) + 1
 	mul = operator.mul
 
 	def recurse(y, x_sum, x):
 		nonlocal best_sum
-		can_break, entries, x_max, fixed, rhs = table[y]
+		rhs, fixed, entries, can_break, x_max = table[y]
 		rhs -= sum(map(mul, fixed, x))
 
 		for x_sum, values in gen_values(x_max, x_sum):
@@ -152,11 +201,10 @@ def solve_matrix(matrix, x_max):
 				best_sum = x_sum
 
 	recurse(len(matrix)-1, 0, ())
-	return [best[index_map[i]] for i in range(len(x_max))]
+	return [best[index_map[i]] for i in range(len(buttons))]
 
 def solve2(machine, machine_num):
 	buttons, joltages = machine
-	max_presses = [min(joltages[i] for i in b) for b in buttons]
 	matrix = [[int(i in b) for b in buttons] + [j] for i, j in enumerate(joltages)]
 
 	scipy_result = solve2_scipy(machine, full_result=True)
@@ -164,7 +212,7 @@ def solve2(machine, machine_num):
 	scipy_result_sum = sum(scipy_result)
 
 	reduce_matrix(matrix)
-	result = solve_matrix(matrix, max_presses)
+	result = solve_matrix(matrix, buttons, joltages)
 	result_sum = sum(result)
 
 	assert check_result(buttons, joltages, scipy_result)
@@ -173,8 +221,8 @@ def solve2(machine, machine_num):
 
 #	if result != scipy_result:
 #		print('Machine', machine_num)
-#		print_result(result)
-#		print_result(scipy_result)
+#		print(rowstr(result), '=>', result_sum)
+#		print(rowstr(scipy_result), '=>', scipy_result_sum)
 	return result_sum
 
 def main(f):
