@@ -146,12 +146,12 @@ def get_max_values(indices, buttons, joltages, max_presses):
 
 	for k in range(2, n+1):
 		for combo in combinations(range(n), k):
-			x = set(buttons[indices[combo[0]]])
-			for i in combo[1:]:
-				x.intersection_update(buttons[indices[i]])
+			b = [indices[i] for i in combo]
+			x = set(range(len(joltages)))
+			x.intersection_update(*(buttons[i] for i in b))
 			if not x: continue
 			max_value = min(joltages[i] for i in x)
-			if max_value >= sum(max_presses[indices[i]] for i in combo): continue
+			if max_value >= sum(max_presses[i] for i in b): continue
 			item = max_value, -k, combo
 			for i in combo:
 				table[i].append(item)
